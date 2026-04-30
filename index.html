@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Anonym schreiben</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
@@ -32,7 +33,6 @@
     line-height: 1.6;
   }
 
-  /* ── NOISE TEXTURE ── */
   body::before {
     content: '';
     position: fixed;
@@ -43,7 +43,6 @@
     z-index: 0;
   }
 
-  /* ── GLOW ── */
   .glow-orb {
     position: fixed;
     width: 600px;
@@ -56,7 +55,6 @@
   .glow-orb.top { top: -200px; left: 50%; transform: translateX(-50%); }
   .glow-orb.bot { bottom: -300px; right: -100px; background: radial-gradient(circle, rgba(93,212,160,0.05) 0%, transparent 70%); }
 
-  /* ── LAYOUT ── */
   .wrap {
     position: relative;
     z-index: 1;
@@ -65,11 +63,9 @@
     padding: 2rem 1.5rem 4rem;
   }
 
-  /* ── HEADER ── */
   header {
     text-align: center;
     padding: 3rem 0 2.5rem;
-    position: relative;
   }
 
   .logo-mark {
@@ -89,17 +85,11 @@
     font-size: clamp(1.5rem, 4vw, 2rem);
     font-weight: 700;
     letter-spacing: -0.02em;
-    color: var(--text);
     margin-bottom: 0.4rem;
   }
 
-  header p {
-    color: var(--muted);
-    font-size: 0.9rem;
-    font-weight: 300;
-  }
+  header p { color: var(--muted); font-size: 0.9rem; font-weight: 300; }
 
-  /* ── BADGE ── */
   .badge {
     display: inline-flex;
     align-items: center;
@@ -115,7 +105,6 @@
   .badge.admin-badge { background: rgba(240,160,80,0.15); color: var(--warn); border: 1px solid rgba(240,160,80,0.2); }
   .badge.dot::before { content: ''; display: block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-  /* ── CARDS ── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -126,11 +115,7 @@
   }
   .card:hover { border-color: var(--border2); }
 
-  /* ── INPUTS ── */
-  input[type="text"],
-  input[type="password"],
-  textarea,
-  select {
+  input[type="text"], input[type="password"], textarea, select {
     width: 100%;
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -145,7 +130,6 @@
   }
   input:focus, textarea:focus { border-color: var(--accent); }
   input::placeholder, textarea::placeholder { color: var(--muted); }
-
   textarea { min-height: 120px; }
 
   label {
@@ -160,7 +144,6 @@
 
   .field { margin-bottom: 1rem; }
 
-  /* ── BUTTONS ── */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -176,13 +159,10 @@
     transition: all 0.18s;
   }
   .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    width: 100%;
-  }
-  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent2); }
 
   .btn-ghost {
     background: transparent;
@@ -192,21 +172,9 @@
   }
   .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
 
-  .btn-danger {
-    background: rgba(240,96,96,0.15);
-    color: var(--danger);
-    border: 1px solid rgba(240,96,96,0.2);
-  }
+  .btn-danger { background: rgba(240,96,96,0.15); color: var(--danger); border: 1px solid rgba(240,96,96,0.2); }
   .btn-danger:hover { background: rgba(240,96,96,0.25); }
 
-  .btn-success {
-    background: rgba(93,212,160,0.15);
-    color: var(--success);
-    border: 1px solid rgba(93,212,160,0.2);
-  }
-  .btn-success:hover { background: rgba(93,212,160,0.25); }
-
-  /* ── TOAST ── */
   #toast {
     position: fixed;
     bottom: 1.5rem;
@@ -226,11 +194,9 @@
   #toast.ok { border-color: rgba(93,212,160,0.3); color: var(--success); }
   #toast.err { border-color: rgba(240,96,96,0.3); color: var(--danger); }
 
-  /* ── VIEWS ── */
   .view { display: none; }
   .view.active { display: block; }
 
-  /* ── NAV BAR ── */
   .topbar {
     display: flex;
     align-items: center;
@@ -243,28 +209,19 @@
     top: 0;
     z-index: 100;
   }
-  .topbar-brand {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--text);
-  }
+  .topbar-brand { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; }
   .topbar-actions { display: flex; gap: 8px; align-items: center; }
 
-  /* ── MESSAGE THREAD ── */
+  .msg-wrap { margin-bottom: 1.2rem; }
+  .msg-meta { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.25rem; }
   .msg-bubble {
     max-width: 85%;
     padding: 0.75rem 1rem;
     border-radius: 14px;
     font-size: 0.88rem;
     line-height: 1.55;
-    margin-bottom: 0.4rem;
     word-break: break-word;
   }
-
-  .msg-wrap { margin-bottom: 1.2rem; }
-  .msg-meta { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.25rem; }
-
   .from-sender .msg-bubble {
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -290,16 +247,12 @@
     transition: background 0.15s;
   }
   .thread-list-item:hover { background: var(--surface2); }
-  .thread-list-item.unread .tli-preview { color: var(--text); }
   .tli-avatar {
-    width: 36px;
-    height: 36px;
+    width: 36px; height: 36px;
     border-radius: 10px;
     background: var(--surface2);
     border: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 11px;
     font-family: 'Space Mono', monospace;
     color: var(--muted);
@@ -310,18 +263,10 @@
   .tli-token { font-size: 0.8rem; font-weight: 500; font-family: 'Space Mono', monospace; color: var(--accent2); }
   .tli-time { font-size: 0.72rem; color: var(--muted); }
   .tli-preview { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .unread-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-    margin-top: 4px;
-  }
+  .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
 
-  /* ── DIVIDER ── */
   .divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
 
-  /* ── ANON KEY DISPLAY ── */
   .key-box {
     background: var(--surface2);
     border: 1px dashed var(--border2);
@@ -338,33 +283,17 @@
   }
   .key-box:hover { background: rgba(124,106,247,0.08); }
 
-  /* ── STATS BAR ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 1.2rem;
-  }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.9rem;
-    text-align: center;
-  }
-  .stat-num { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1.2rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; text-align: center; }
+  .stat-num { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; }
   .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 
-  /* ── MODAL ── */
   .modal-bg {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.7);
     backdrop-filter: blur(4px);
     z-index: 200;
-    display: none;
-    align-items: center;
-    justify-content: center;
+    display: none; align-items: center; justify-content: center;
     padding: 1rem;
   }
   .modal-bg.open { display: flex; }
@@ -373,31 +302,19 @@
     border: 1px solid var(--border2);
     border-radius: 18px;
     padding: 1.8rem;
-    width: 100%;
-    max-width: 460px;
+    width: 100%; max-width: 460px;
     position: relative;
   }
   .modal-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 1.2rem;
-    cursor: pointer;
-    line-height: 1;
-    padding: 2px 6px;
-    border-radius: 6px;
-    transition: color 0.15s;
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: none; color: var(--muted);
+    font-size: 1.2rem; cursor: pointer; padding: 2px 6px;
+    border-radius: 6px; transition: color 0.15s;
   }
   .modal-close:hover { color: var(--text); }
 
-  /* ── SETTINGS ── */
   .settings-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 0.9rem 0;
     border-bottom: 1px solid var(--border);
   }
@@ -405,66 +322,50 @@
   .settings-label { font-size: 0.88rem; }
   .settings-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
-  /* ── TOGGLE ── */
-  .toggle {
-    position: relative;
-    width: 40px;
-    height: 22px;
-    flex-shrink: 0;
-  }
+  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
   .toggle input { opacity: 0; width: 0; height: 0; }
   .toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    inset: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 22px;
-    transition: 0.2s;
+    position: absolute; cursor: pointer; inset: 0;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 22px; transition: 0.2s;
   }
   .toggle-slider::before {
-    content: '';
-    position: absolute;
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background: var(--muted);
-    border-radius: 50%;
-    transition: 0.2s;
+    content: ''; position: absolute;
+    height: 14px; width: 14px; left: 3px; bottom: 3px;
+    background: var(--muted); border-radius: 50%; transition: 0.2s;
   }
   .toggle input:checked + .toggle-slider { background: rgba(124,106,247,0.2); border-color: var(--accent); }
   .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
 
-  /* ── MISC ── */
-  .emoji-icon { font-size: 1.1em; }
-  .flex { display: flex; }
-  .gap-8 { gap: 8px; }
-  .mt-8 { margin-top: 8px; }
-  .mt-16 { margin-top: 16px; }
-  .text-muted { color: var(--muted); font-size: 0.82rem; }
-  .text-center { text-align: center; }
-  .w100 { width: 100%; }
   .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
   .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4; }
-  h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
-  h3 { font-size: 0.95rem; font-weight: 500; }
-  small { font-size: 0.75rem; color: var(--muted); }
+
   .back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--muted);
-    font-size: 0.82rem;
-    cursor: pointer;
-    border: none;
-    background: none;
-    padding: 0;
-    font-family: 'Sora', sans-serif;
-    transition: color 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--muted); font-size: 0.82rem; cursor: pointer;
+    border: none; background: none; padding: 0;
+    font-family: 'Sora', sans-serif; transition: color 0.15s;
     margin-bottom: 1rem;
   }
   .back-btn:hover { color: var(--text); }
+
+  h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .text-muted { color: var(--muted); font-size: 0.82rem; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .w100 { width: 100%; }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 480px) {
     .wrap { padding: 1rem 1rem 3rem; }
@@ -478,9 +379,7 @@
 <div class="glow-orb bot"></div>
 <div id="toast"></div>
 
-<!-- ══════════════════════════════════
-     VIEW: LANDING (public)
-     ══════════════════════════════════ -->
+<!-- ══ VIEW: LANDING ══ -->
 <div id="view-landing" class="view active">
   <div class="wrap">
     <header>
@@ -494,18 +393,14 @@
     <div class="card">
       <h2 style="margin-bottom:0.2rem;">Neue Nachricht senden</h2>
       <p class="text-muted" style="margin-bottom:1.2rem;">Dein Name wird niemals gespeichert oder angezeigt.</p>
-
       <div class="field">
         <label>Deine Nachricht</label>
         <textarea id="send-text" placeholder="Was möchtest du sagen?"></textarea>
       </div>
-
       <div id="send-char" class="text-muted" style="text-align:right;font-size:0.72rem;margin-top:-8px;margin-bottom:12px;">0 / 2000</div>
-
-      <button class="btn btn-primary" onclick="sendMessage()">
+      <button class="btn btn-primary" id="btn-send" onclick="sendMessage()">
         <span>✦</span> Anonym senden
       </button>
-
       <div id="send-result" style="display:none;" class="mt-16">
         <hr class="divider">
         <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem;">Dein anonymer Antwort-Schlüssel (speicher ihn!):</p>
@@ -516,7 +411,7 @@
 
     <div class="card">
       <h2 style="margin-bottom:0.2rem;">Antwort lesen</h2>
-      <p class="text-muted" style="margin-bottom:1rem;">Gib deinen anonymen Schlüssel ein, um eine Antwort zu sehen.</p>
+      <p class="text-muted" style="margin-bottom:1rem;">Gib deinen anonymen Schlüssel ein.</p>
       <div class="field">
         <label>Dein Schlüssel</label>
         <input type="text" id="reply-key-input" placeholder="z.B. anon_a1b2c3d4" maxlength="18">
@@ -532,9 +427,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     VIEW: REPLY READER (sender reads answer)
-     ══════════════════════════════════ -->
+<!-- ══ VIEW: REPLY READER ══ -->
 <div id="view-reply-reader" class="view">
   <div class="wrap">
     <button class="back-btn" onclick="showView('view-landing')">← Zurück</button>
@@ -542,20 +435,16 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     VIEW: ADMIN LOGIN
-     ══════════════════════════════════ -->
+<!-- ══ VIEW: LOGIN ══ -->
 <div id="view-login" class="view">
   <div class="wrap">
     <button class="back-btn" onclick="showView('view-landing')">← Zurück</button>
-
     <div class="card" style="max-width:360px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:1.5rem;">
         <div style="font-size:2rem;margin-bottom:0.5rem;">🔐</div>
         <h2>Admin Login</h2>
         <p class="text-muted">Nur für den Host</p>
       </div>
-
       <div class="field">
         <label>Passwort</label>
         <input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
@@ -565,70 +454,60 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     VIEW: ADMIN DASHBOARD
-     ══════════════════════════════════ -->
+<!-- ══ VIEW: ADMIN DASHBOARD ══ -->
 <div id="view-admin" class="view">
   <div class="topbar">
     <span class="topbar-brand">anon.msg</span>
     <div class="topbar-actions">
       <span class="badge admin-badge dot">Admin</span>
-      <button class="btn btn-ghost" onclick="openSettings()" title="Einstellungen">⚙</button>
+      <button class="btn btn-ghost" onclick="openSettings()">⚙</button>
       <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
     </div>
   </div>
-
   <div class="wrap">
     <div class="stats-row" id="admin-stats"></div>
-
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
       <h2 style="margin-bottom:0;">Nachrichten</h2>
-      <select id="filter-sel" onchange="renderThreadList()" style="width:auto;padding:0.4rem 0.7rem;font-size:0.8rem;">
-        <option value="all">Alle</option>
-        <option value="unread">Ungelesen</option>
-        <option value="unanswered">Ohne Antwort</option>
-      </select>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-ghost" onclick="renderAdminDash()" style="font-size:0.78rem;padding:0.45rem 0.8rem;">↻ Neu laden</button>
+        <select id="filter-sel" onchange="renderThreadList(allThreads)" style="width:auto;padding:0.4rem 0.7rem;font-size:0.8rem;">
+          <option value="all">Alle</option>
+          <option value="unread">Ungelesen</option>
+          <option value="unanswered">Ohne Antwort</option>
+        </select>
+      </div>
     </div>
-
     <div class="card" style="padding:0;overflow:hidden;">
       <div id="thread-list"></div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     VIEW: ADMIN THREAD DETAIL
-     ══════════════════════════════════ -->
+<!-- ══ VIEW: THREAD DETAIL ══ -->
 <div id="view-thread" class="view">
   <div class="topbar">
     <button class="back-btn" onclick="showView('view-admin');renderAdminDash()" style="margin:0;">← Alle Nachrichten</button>
-    <div class="topbar-actions">
-      <button class="btn btn-danger" id="btn-delete-thread" onclick="deleteThread()" style="font-size:0.78rem;padding:0.5rem 0.9rem;">Löschen</button>
-    </div>
+    <button class="btn btn-danger" onclick="deleteThread()" style="font-size:0.78rem;padding:0.5rem 0.9rem;">Löschen</button>
   </div>
-
   <div class="wrap">
     <div id="thread-header" style="margin-bottom:1rem;"></div>
     <div class="card" style="padding:1.2rem;" id="thread-messages"></div>
-    <div class="card mt-8" id="reply-area" style="display:none;">
+    <div class="card mt-8">
       <div class="field">
         <label>Antwort schreiben</label>
         <textarea id="reply-text" placeholder="Deine Antwort..."></textarea>
       </div>
-      <button class="btn btn-primary" onclick="sendReply()">Antwort senden</button>
+      <button class="btn btn-primary" id="btn-reply" onclick="sendReply()">Antwort senden</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     MODAL: SETTINGS
-     ══════════════════════════════════ -->
+<!-- ══ MODAL: SETTINGS ══ -->
 <div class="modal-bg" id="modal-settings">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modal-settings')">✕</button>
     <h2 style="margin-bottom:0.2rem;">⚙ Einstellungen</h2>
     <p class="text-muted" style="margin-bottom:1.2rem;">Nur du als Admin siehst und änderst das.</p>
-
     <div class="settings-row">
       <div>
         <div class="settings-label">Admin Passwort ändern</div>
@@ -636,7 +515,6 @@
       </div>
       <button class="btn btn-ghost" onclick="changePW()" style="font-size:0.78rem;">Ändern</button>
     </div>
-
     <div class="settings-row">
       <div>
         <div class="settings-label">Neue Nachrichten erlauben</div>
@@ -647,15 +525,6 @@
         <span class="toggle-slider"></span>
       </label>
     </div>
-
-    <div class="settings-row">
-      <div>
-        <div class="settings-label">Seiten-Titel</div>
-        <div class="settings-sub">Name der Seite im Browser</div>
-      </div>
-      <button class="btn btn-ghost" onclick="changeSiteTitle()" style="font-size:0.78rem;">Ändern</button>
-    </div>
-
     <div class="settings-row">
       <div>
         <div class="settings-label">Alle Nachrichten löschen</div>
@@ -663,15 +532,12 @@
       </div>
       <button class="btn btn-danger" onclick="nukeAll()" style="font-size:0.78rem;padding:0.45rem 0.85rem;">Reset</button>
     </div>
-
     <hr class="divider">
-    <p style="font-size:0.72rem;color:var(--muted);text-align:center;">Alle Daten werden lokal in deinem Browser gespeichert (localStorage).<br>Öffne die Seite immer im selben Browser um alle Nachrichten zu sehen.</p>
+    <p style="font-size:0.72rem;color:var(--muted);text-align:center;">Nachrichten werden in der Supabase Datenbank gespeichert.<br>Von jedem Gerät und WLAN abrufbar.</p>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     MODAL: CHANGE PW
-     ══════════════════════════════════ -->
+<!-- ══ MODAL: CHANGE PW ══ -->
 <div class="modal-bg" id="modal-pw">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('modal-pw')">✕</button>
@@ -694,41 +560,23 @@
 
 <script>
 // ════════════════════════════════════════
-//  STATE
+//  SUPABASE CONFIG  ← hier sind deine Keys
 // ════════════════════════════════════════
+const SUPABASE_URL = 'https://oyybigvrnhrffasugupg.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Bd1JH9xtc4T0UGq5WPi_oA_VwStHt_M'; // ← ersetze das!
 
-const DB_KEY   = '__anon_msg__';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ════════════════════════════════════════
+//  ADMIN PASSWORD (in Supabase settings Tabelle gespeichert)
+// ════════════════════════════════════════
 const SESS_KEY = '__anon_sess__';
-
-function getDB() {
-  try { return JSON.parse(localStorage.getItem(DB_KEY)) || initDB(); }
-  catch { return initDB(); }
-}
-
-function initDB() {
-  const db = {
-    password: 'Geschwister', 
-    settings: { open: true, title: 'anon.msg' },
-    threads: []           // { id, token, msgs:[{from,text,ts}], read:bool }
-  };
-  saveDB(db);
-  return db;
-}
-
-function saveDB(db) {
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
-}
-
-function isLoggedIn() {
-  return sessionStorage.getItem(SESS_KEY) === 'yes';
-}
-
+let allThreads = [];
 let currentThreadId = null;
 
 // ════════════════════════════════════════
 //  VIEWS
 // ════════════════════════════════════════
-
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -738,7 +586,6 @@ function showView(id) {
 // ════════════════════════════════════════
 //  TOAST
 // ════════════════════════════════════════
-
 let toastTimer;
 function toast(msg, type='') {
   const el = document.getElementById('toast');
@@ -751,7 +598,6 @@ function toast(msg, type='') {
 // ════════════════════════════════════════
 //  TOKEN GENERATOR
 // ════════════════════════════════════════
-
 function genToken() {
   const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
   let t = 'anon_';
@@ -762,91 +608,97 @@ function genToken() {
 // ════════════════════════════════════════
 //  SEND MESSAGE (public)
 // ════════════════════════════════════════
-
 document.getElementById('send-text').addEventListener('input', function() {
   document.getElementById('send-char').textContent = this.value.length + ' / 2000';
 });
 
-function sendMessage() {
-  const db = getDB();
-  if(!db.settings.open) { toast('Neue Nachrichten sind gerade deaktiviert.','err'); return; }
-
+async function sendMessage() {
   const text = document.getElementById('send-text').value.trim();
-  if(!text) { toast('Bitte schreib etwas!','err'); return; }
-  if(text.length > 2000) { toast('Zu lang (max. 2000 Zeichen)','err'); return; }
+  if(!text) { toast('Bitte schreib etwas!', 'err'); return; }
+  if(text.length > 2000) { toast('Zu lang (max. 2000 Zeichen)', 'err'); return; }
+
+  // Check if open
+  const { data: cfg } = await sb.from('settings').select('value').eq('key','open').single();
+  if(cfg && cfg.value === 'false') { toast('Neue Nachrichten sind gerade deaktiviert.', 'err'); return; }
+
+  const btn = document.getElementById('btn-send');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Senden...';
 
   const token = genToken();
-  const thread = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-    token,
-    msgs: [{ from: 'sender', text, ts: Date.now() }],
-    read: false
-  };
+  const msgs = [{ from: 'sender', text, ts: Date.now() }];
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
 
-  db.threads.unshift(thread);
-  saveDB(db);
+  const { error } = await sb.from('threads').insert({ id, token, msgs, read: false });
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>✦</span> Anonym senden';
+
+  if(error) { toast('Fehler beim Senden: ' + error.message, 'err'); return; }
 
   document.getElementById('send-text').value = '';
   document.getElementById('send-char').textContent = '0 / 2000';
   document.getElementById('my-key').textContent = token;
   document.getElementById('send-result').style.display = 'block';
-  toast('Nachricht anonym gesendet!','ok');
+  toast('Nachricht anonym gesendet!', 'ok');
 }
 
 function copyKey() {
   const key = document.getElementById('my-key').textContent;
-  navigator.clipboard.writeText(key).then(() => toast('Schlüssel kopiert!','ok')).catch(()=>{});
+  navigator.clipboard.writeText(key).then(() => toast('Schlüssel kopiert!', 'ok')).catch(()=>{});
 }
 
 // ════════════════════════════════════════
-//  CHECK REPLY (sender)
+//  CHECK REPLY (sender liest Antwort)
 // ════════════════════════════════════════
-
-function checkReply() {
+async function checkReply() {
   const key = document.getElementById('reply-key-input').value.trim();
-  if(!key) { toast('Schlüssel eingeben','err'); return; }
-
-  const db = getDB();
-  const thread = db.threads.find(t => t.token === key);
+  if(!key) { toast('Schlüssel eingeben', 'err'); return; }
 
   const box = document.getElementById('reply-reader-content');
-  if(!thread) {
-    box.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><p>Kein Thread mit diesem Schlüssel gefunden.</p></div>`;
-  } else {
-    const replies = thread.msgs.filter(m => m.from === 'host');
-    if(replies.length === 0) {
-      box.innerHTML = `<div class="empty-state"><div class="es-icon">⏳</div><p>Noch keine Antwort. Schau später wieder vorbei!</p></div>`;
-    } else {
-      box.innerHTML = `
-        <h2 style="margin-bottom:0.3rem;">Antwort erhalten</h2>
-        <p class="text-muted" style="margin-bottom:1.2rem;">Nur du siehst das mit deinem Schlüssel.</p>
-        ${replies.map(m=>`
-          <div class="msg-wrap from-host">
-            <div class="msg-meta">${fmtDate(m.ts)}</div>
-            <div class="msg-bubble">${escHtml(m.text)}</div>
-          </div>
-        `).join('')}
-      `;
-    }
-  }
+  box.innerHTML = '<div class="empty-state"><span class="spinner"></span></div>';
   showView('view-reply-reader');
+
+  const { data: thread, error } = await sb.from('threads').select('*').eq('token', key).single();
+
+  if(error || !thread) {
+    box.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><p>Kein Thread mit diesem Schlüssel gefunden.</p></div>`;
+    return;
+  }
+
+  const replies = thread.msgs.filter(m => m.from === 'host');
+  if(replies.length === 0) {
+    box.innerHTML = `<div class="empty-state"><div class="es-icon">⏳</div><p>Noch keine Antwort. Schau später wieder vorbei!</p></div>`;
+  } else {
+    box.innerHTML = `
+      <h2 style="margin-bottom:0.3rem;">Antwort erhalten</h2>
+      <p class="text-muted" style="margin-bottom:1.2rem;">Nur du siehst das mit deinem Schlüssel.</p>
+      ${replies.map(m=>`
+        <div class="msg-wrap from-host">
+          <div class="msg-meta">Antwort · ${fmtDate(m.ts)}</div>
+          <div class="msg-bubble">${escHtml(m.text)}</div>
+        </div>
+      `).join('')}
+    `;
+  }
 }
 
 // ════════════════════════════════════════
 //  LOGIN / LOGOUT
 // ════════════════════════════════════════
-
-function doLogin() {
-  const db = getDB();
+async function doLogin() {
   const pw = document.getElementById('login-pw').value;
-  if(pw === db.password) {
+  const { data, error } = await sb.from('settings').select('value').eq('key','password').single();
+
+  if(error) { toast('Verbindungsfehler', 'err'); return; }
+  if(data.value === pw) {
     sessionStorage.setItem(SESS_KEY, 'yes');
     document.getElementById('login-pw').value = '';
     showView('view-admin');
     renderAdminDash();
-    toast('Willkommen zurück!','ok');
+    toast('Willkommen zurück!', 'ok');
   } else {
-    toast('Falsches Passwort','err');
+    toast('Falsches Passwort', 'err');
   }
 }
 
@@ -857,26 +709,29 @@ function doLogout() {
 }
 
 function requireAdmin() {
-  if(!isLoggedIn()) { showView('view-login'); return false; }
+  if(sessionStorage.getItem(SESS_KEY) !== 'yes') { showView('view-login'); return false; }
   return true;
 }
 
 // ════════════════════════════════════════
 //  ADMIN DASHBOARD
 // ════════════════════════════════════════
-
-function renderAdminDash() {
+async function renderAdminDash() {
   if(!requireAdmin()) return;
-  renderStats();
-  renderThreadList();
+  document.getElementById('thread-list').innerHTML = '<div class="empty-state"><span class="spinner"></span></div>';
+
+  const { data: threads, error } = await sb.from('threads').select('*').order('created_at', { ascending: false });
+  if(error) { toast('Ladefehler: ' + error.message, 'err'); return; }
+
+  allThreads = threads || [];
+  renderStats(allThreads);
+  renderThreadList(allThreads);
 }
 
-function renderStats() {
-  const db = getDB();
-  const total = db.threads.length;
-  const unread = db.threads.filter(t => !t.read).length;
-  const answered = db.threads.filter(t => t.msgs.some(m => m.from==='host')).length;
-
+function renderStats(threads) {
+  const total = threads.length;
+  const unread = threads.filter(t => !t.read).length;
+  const answered = threads.filter(t => t.msgs.some(m => m.from === 'host')).length;
   document.getElementById('admin-stats').innerHTML = `
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Gesamt</div></div>
     <div class="stat-card"><div class="stat-num">${unread}</div><div class="stat-lbl">Ungelesen</div></div>
@@ -884,25 +739,23 @@ function renderStats() {
   `;
 }
 
-function renderThreadList() {
-  const db = getDB();
+function renderThreadList(threads) {
   const filter = document.getElementById('filter-sel').value;
-  let threads = [...db.threads];
+  let list = [...threads];
+  if(filter === 'unread') list = list.filter(t => !t.read);
+  if(filter === 'unanswered') list = list.filter(t => !t.msgs.some(m => m.from === 'host'));
 
-  if(filter==='unread') threads = threads.filter(t=>!t.read);
-  if(filter==='unanswered') threads = threads.filter(t=>!t.msgs.some(m=>m.from==='host'));
-
-  const list = document.getElementById('thread-list');
-  if(!threads.length) {
-    list.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>Keine Nachrichten</p></div>`;
+  const el = document.getElementById('thread-list');
+  if(!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>Keine Nachrichten</p></div>`;
     return;
   }
 
-  list.innerHTML = threads.map(t => {
-    const last = t.msgs[t.msgs.length-1];
-    const hasReply = t.msgs.some(m=>m.from==='host');
+  el.innerHTML = list.map(t => {
+    const last = t.msgs[t.msgs.length - 1];
+    const hasReply = t.msgs.some(m => m.from === 'host');
     return `
-      <div class="thread-list-item ${!t.read?'unread':''}" onclick="openThread('${t.id}')">
+      <div class="thread-list-item" onclick="openThread('${t.id}')">
         <div class="tli-avatar">${t.token.slice(5,7).toUpperCase()}</div>
         <div class="tli-info">
           <div class="tli-top">
@@ -911,20 +764,23 @@ function renderThreadList() {
           </div>
           <div class="tli-preview">${hasReply?'✓ Beantwortet · ':''}${escHtml(last.text).slice(0,80)}${last.text.length>80?'…':''}</div>
         </div>
-        ${!t.read?'<div class="unread-dot"></div>':''}
+        ${!t.read ? '<div class="unread-dot"></div>' : ''}
       </div>
     `;
   }).join('');
 }
 
-function openThread(id) {
+async function openThread(id) {
   if(!requireAdmin()) return;
-  const db = getDB();
-  const thread = db.threads.find(t=>t.id===id);
+  const thread = allThreads.find(t => t.id === id);
   if(!thread) return;
 
-  thread.read = true;
-  saveDB(db);
+  // Mark as read
+  if(!thread.read) {
+    await sb.from('threads').update({ read: true }).eq('id', id);
+    thread.read = true;
+  }
+
   currentThreadId = id;
 
   document.getElementById('thread-header').innerHTML = `
@@ -937,58 +793,66 @@ function openThread(id) {
     </div>
   `;
 
-  document.getElementById('thread-messages').innerHTML = thread.msgs.map(m=>`
-    <div class="msg-wrap from-${m.from==='host'?'host':'sender'}">
-      <div class="msg-meta">${m.from==='host'?'Du · ':'Anonym · '}${fmtDate(m.ts)}</div>
+  document.getElementById('thread-messages').innerHTML = thread.msgs.map(m => `
+    <div class="msg-wrap from-${m.from === 'host' ? 'host' : 'sender'}">
+      <div class="msg-meta">${m.from === 'host' ? 'Du · ' : 'Anonym · '}${fmtDate(m.ts)}</div>
       <div class="msg-bubble">${escHtml(m.text)}</div>
     </div>
   `).join('');
 
-  document.getElementById('reply-area').style.display = 'block';
   document.getElementById('reply-text').value = '';
   showView('view-thread');
 }
 
-function sendReply() {
+async function sendReply() {
   if(!requireAdmin()) return;
   const text = document.getElementById('reply-text').value.trim();
-  if(!text) { toast('Leere Antwort','err'); return; }
+  if(!text) { toast('Leere Antwort', 'err'); return; }
 
-  const db = getDB();
-  const thread = db.threads.find(t=>t.id===currentThreadId);
-  if(!thread) return;
+  const btn = document.getElementById('btn-reply');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Senden...';
 
-  thread.msgs.push({ from:'host', text, ts: Date.now() });
-  saveDB(db);
-  openThread(currentThreadId); // re-render
-  toast('Antwort gesendet!','ok');
+  const thread = allThreads.find(t => t.id === currentThreadId);
+  const newMsgs = [...thread.msgs, { from: 'host', text, ts: Date.now() }];
+
+  const { error } = await sb.from('threads').update({ msgs: newMsgs }).eq('id', currentThreadId);
+
+  btn.disabled = false;
+  btn.innerHTML = 'Antwort senden';
+
+  if(error) { toast('Fehler: ' + error.message, 'err'); return; }
+
+  thread.msgs = newMsgs;
+  openThread(currentThreadId);
+  toast('Antwort gesendet!', 'ok');
 }
 
-function deleteThread() {
+async function deleteThread() {
   if(!confirm('Thread wirklich löschen?')) return;
-  const db = getDB();
-  db.threads = db.threads.filter(t=>t.id!==currentThreadId);
-  saveDB(db);
+  const { error } = await sb.from('threads').delete().eq('id', currentThreadId);
+  if(error) { toast('Fehler: ' + error.message, 'err'); return; }
+  allThreads = allThreads.filter(t => t.id !== currentThreadId);
   showView('view-admin');
-  renderAdminDash();
+  renderStats(allThreads);
+  renderThreadList(allThreads);
   toast('Gelöscht');
 }
 
 // ════════════════════════════════════════
 //  SETTINGS
 // ════════════════════════════════════════
-
-function openSettings() {
-  const db = getDB();
-  document.getElementById('toggle-open').checked = db.settings.open !== false;
+async function openSettings() {
+  const { data } = await sb.from('settings').select('*');
+  const cfg = {};
+  (data||[]).forEach(r => cfg[r.key] = r.value);
+  document.getElementById('toggle-open').checked = cfg.open !== 'false';
   document.getElementById('modal-settings').classList.add('open');
 }
 
-function saveSetting(key, val) {
-  const db = getDB();
-  db.settings[key] = val;
-  saveDB(db);
-  toast('Gespeichert','ok');
+async function saveSetting(key, val) {
+  await sb.from('settings').upsert({ key, value: String(val) }, { onConflict: 'key' });
+  toast('Gespeichert', 'ok');
 }
 
 function changePW() {
@@ -996,45 +860,34 @@ function changePW() {
   document.getElementById('modal-pw').classList.add('open');
 }
 
-function confirmChangePW() {
-  const db = getDB();
+async function confirmChangePW() {
+  const { data } = await sb.from('settings').select('value').eq('key','password').single();
   const old = document.getElementById('pw-old').value;
   const nw  = document.getElementById('pw-new').value;
   const rep = document.getElementById('pw-rep').value;
 
-  if(old !== db.password) { toast('Aktuelles Passwort falsch','err'); return; }
-  if(nw.length < 6) { toast('Mindestens 6 Zeichen','err'); return; }
-  if(nw !== rep) { toast('Passwörter stimmen nicht überein','err'); return; }
+  if(old !== data.value) { toast('Aktuelles Passwort falsch', 'err'); return; }
+  if(nw.length < 6) { toast('Mindestens 6 Zeichen', 'err'); return; }
+  if(nw !== rep) { toast('Passwörter stimmen nicht überein', 'err'); return; }
 
-  db.password = nw;
-  saveDB(db);
+  await sb.from('settings').upsert({ key: 'password', value: nw }, { onConflict: 'key' });
   closeModal('modal-pw');
-  toast('Passwort geändert!','ok');
+  toast('Passwort geändert!', 'ok');
 }
 
-function changeSiteTitle() {
-  const t = prompt('Neuer Seiten-Titel:');
-  if(t && t.trim()) {
-    document.title = t.trim();
-    saveSetting('title', t.trim());
-  }
-}
-
-function nukeAll() {
+async function nukeAll() {
   if(!confirm('Wirklich ALLE Nachrichten für immer löschen?')) return;
-  const db = getDB();
-  db.threads = [];
-  saveDB(db);
+  await sb.from('threads').delete().neq('id', 'x');
+  allThreads = [];
   closeModal('modal-settings');
-  renderAdminDash();
-  toast('Alle Nachrichten gelöscht','ok');
+  renderStats([]);
+  renderThreadList([]);
+  toast('Alle Nachrichten gelöscht', 'ok');
 }
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
-
-// click outside modal to close
 document.querySelectorAll('.modal-bg').forEach(bg => {
   bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); });
 });
@@ -1042,36 +895,18 @@ document.querySelectorAll('.modal-bg').forEach(bg => {
 // ════════════════════════════════════════
 //  HELPERS
 // ════════════════════════════════════════
-
 function escHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
 
 function fmtDate(ts) {
   const d = new Date(ts);
-  const now = new Date();
-  const diff = (now - d) / 1000;
+  const diff = (Date.now() - d) / 1000;
   if(diff < 60) return 'Gerade eben';
   if(diff < 3600) return Math.floor(diff/60) + ' Min.';
   if(diff < 86400) return Math.floor(diff/3600) + ' Std.';
   return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
 }
-
-// ════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════
-
-(function init() {
-  getDB(); // ensure DB exists
-  // apply saved title
-  const db = getDB();
-  if(db.settings.title) document.title = db.settings.title;
-
-  // If session was somehow preserved and user navigates back
-  if(isLoggedIn()) {
-    // stay on landing, don't auto-redirect
-  }
-})();
 </script>
 </body>
 </html>
