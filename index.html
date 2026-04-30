@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anonym schreiben</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #7c6af7;
+    --accent2: #a89bf5;
+    --text: #e8e6f0;
+    --muted: #6b6880;
+    --danger: #f06060;
+    --success: #5dd4a0;
+    --warn: #f0a050;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 200px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── GLOW ── */
+  .glow-orb {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,106,247,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-orb.top { top: -200px; left: 50%; transform: translateX(-50%); }
+  .glow-orb.bot { bottom: -300px; right: -100px; background: radial-gradient(circle, rgba(93,212,160,0.05) 0%, transparent 70%); }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    padding: 3rem 0 2.5rem;
+    position: relative;
+  }
+
+  .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), #5dd4a0);
+    margin-bottom: 1.2rem;
+    font-size: 24px;
+  }
+
+  header h1 {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 300;
+  }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge.anon { background: rgba(124,106,247,0.15); color: var(--accent2); border: 1px solid rgba(124,106,247,0.2); }
+  .badge.admin-badge { background: rgba(240,160,80,0.15); color: var(--warn); border: 1px solid rgba(240,160,80,0.2); }
+  .badge.dot::before { content: ''; display: block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  /* ── INPUTS ── */
+  input[type="text"],
+  input[type="password"],
+  textarea,
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.7rem 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+
+  textarea { min-height: 120px; }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .field { margin-bottom: 1rem; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.65rem 1.4rem;
+    border-radius: 10px;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    width: 100%;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 0.82rem;
+  }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+  .btn-danger {
+    background: rgba(240,96,96,0.15);
+    color: var(--danger);
+    border: 1px solid rgba(240,96,96,0.2);
+  }
+  .btn-danger:hover { background: rgba(240,96,96,0.25); }
+
+  .btn-success {
+    background: rgba(93,212,160,0.15);
+    color: var(--success);
+    border: 1px solid rgba(93,212,160,0.2);
+  }
+  .btn-success:hover { background: rgba(93,212,160,0.25); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.7rem 1.4rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.ok { border-color: rgba(93,212,160,0.3); color: var(--success); }
+  #toast.err { border-color: rgba(240,96,96,0.3); color: var(--danger); }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── NAV BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.9);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-brand {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── MESSAGE THREAD ── */
+  .msg-bubble {
+    max-width: 85%;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    margin-bottom: 0.4rem;
+    word-break: break-word;
+  }
+
+  .msg-wrap { margin-bottom: 1.2rem; }
+  .msg-meta { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.25rem; }
+
+  .from-sender .msg-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    margin-right: auto;
+  }
+  .from-host .msg-bubble {
+    background: rgba(124,106,247,0.2);
+    border: 1px solid rgba(124,106,247,0.25);
+    color: var(--accent2);
+    border-bottom-right-radius: 4px;
+    margin-left: auto;
+  }
+  .from-host .msg-meta { text-align: right; }
+
+  .thread-list-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .thread-list-item:hover { background: var(--surface2); }
+  .thread-list-item.unread .tli-preview { color: var(--text); }
+  .tli-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .tli-info { flex: 1; min-width: 0; }
+  .tli-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .tli-token { font-size: 0.8rem; font-weight: 500; font-family: 'Space Mono', monospace; color: var(--accent2); }
+  .tli-time { font-size: 0.72rem; color: var(--muted); }
+  .tli-preview { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .unread-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+  /* ── ANON KEY DISPLAY ── */
+  .key-box {
+    background: var(--surface2);
+    border: 1px dashed var(--border2);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-align: center;
+    cursor: pointer;
+    user-select: all;
+    transition: background 0.15s;
+  }
+  .key-box:hover { background: rgba(124,106,247,0.08); }
+
+  /* ── STATS BAR ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1.2rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem;
+    text-align: center;
+  }
+  .stat-num { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    padding: 1.8rem;
+    width: 100%;
+    max-width: 460px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── SETTINGS ── */
+  .settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 0.88rem; }
+  .settings-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── TOGGLE ── */
+  .toggle {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 22px;
+    transition: 0.2s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--muted);
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: rgba(124,106,247,0.2); border-color: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+
+  /* ── MISC ── */
+  .emoji-icon { font-size: 1.1em; }
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .text-muted { color: var(--muted); font-size: 0.82rem; }
+  .text-center { text-align: center; }
+  .w100 { width: 100%; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4; }
+  h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
+  h3 { font-size: 0.95rem; font-weight: 500; }
+  small { font-size: 0.75rem; color: var(--muted); }
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    border: none;
+    background: none;
+    padding: 0;
+    font-family: 'Sora', sans-serif;
+    transition: color 0.15s;
+    margin-bottom: 1rem;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 1rem 1rem 3rem; }
+    header { padding: 2rem 0 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-orb top"></div>
+<div class="glow-orb bot"></div>
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════
+     VIEW: LANDING (public)
+     ══════════════════════════════════ -->
+<div id="view-landing" class="view active">
+  <div class="wrap">
+    <header>
+      <div class="logo-mark">✦</div>
+      <h1>anon.msg</h1>
+      <p>Schreib mir anonym — ich antworte dir direkt.</p>
+      <br>
+      <span class="badge anon dot">Vollständig anonym</span>
+    </header>
+
+    <div class="card">
+      <h2 style="margin-bottom:0.2rem;">Neue Nachricht senden</h2>
+      <p class="text-muted" style="margin-bottom:1.2rem;">Dein Name wird niemals gespeichert oder angezeigt.</p>
+
+      <div class="field">
+        <label>Deine Nachricht</label>
+        <textarea id="send-text" placeholder="Was möchtest du sagen?"></textarea>
+      </div>
+
+      <div id="send-char" class="text-muted" style="text-align:right;font-size:0.72rem;margin-top:-8px;margin-bottom:12px;">0 / 2000</div>
+
+      <button class="btn btn-primary" onclick="sendMessage()">
+        <span>✦</span> Anonym senden
+      </button>
+
+      <div id="send-result" style="display:none;" class="mt-16">
+        <hr class="divider">
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem;">Dein anonymer Antwort-Schlüssel (speicher ihn!):</p>
+        <div class="key-box" id="my-key" onclick="copyKey()" title="Klicken zum Kopieren"></div>
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem;text-align:center;">Mit diesem Schlüssel kannst du Antworten lesen</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:0.2rem;">Antwort lesen</h2>
+      <p class="text-muted" style="margin-bottom:1rem;">Gib deinen anonymen Schlüssel ein, um eine Antwort zu sehen.</p>
+      <div class="field">
+        <label>Dein Schlüssel</label>
+        <input type="text" id="reply-key-input" placeholder="z.B. anon_a1b2c3d4" maxlength="18">
+      </div>
+      <button class="btn btn-ghost w100" onclick="checkReply()">Antwort abrufen →</button>
+    </div>
+
+    <div style="text-align:center;padding-top:1rem;">
+      <button class="btn btn-ghost" onclick="showView('view-login')" style="font-size:0.75rem;color:var(--muted);">
+        🔐 Host / Admin Login
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     VIEW: REPLY READER (sender reads answer)
+     ══════════════════════════════════ -->
+<div id="view-reply-reader" class="view">
+  <div class="wrap">
+    <button class="back-btn" onclick="showView('view-landing')">← Zurück</button>
+    <div class="card" id="reply-reader-content"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     VIEW: ADMIN LOGIN
+     ══════════════════════════════════ -->
+<div id="view-login" class="view">
+  <div class="wrap">
+    <button class="back-btn" onclick="showView('view-landing')">← Zurück</button>
+
+    <div class="card" style="max-width:360px;margin:0 auto;">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">🔐</div>
+        <h2>Admin Login</h2>
+        <p class="text-muted">Nur für den Host</p>
+      </div>
+
+      <div class="field">
+        <label>Passwort</label>
+        <input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">Einloggen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     VIEW: ADMIN DASHBOARD
+     ══════════════════════════════════ -->
+<div id="view-admin" class="view">
+  <div class="topbar">
+    <span class="topbar-brand">anon.msg</span>
+    <div class="topbar-actions">
+      <span class="badge admin-badge dot">Admin</span>
+      <button class="btn btn-ghost" onclick="openSettings()" title="Einstellungen">⚙</button>
+      <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats-row" id="admin-stats"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
+      <h2 style="margin-bottom:0;">Nachrichten</h2>
+      <select id="filter-sel" onchange="renderThreadList()" style="width:auto;padding:0.4rem 0.7rem;font-size:0.8rem;">
+        <option value="all">Alle</option>
+        <option value="unread">Ungelesen</option>
+        <option value="unanswered">Ohne Antwort</option>
+      </select>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div id="thread-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     VIEW: ADMIN THREAD DETAIL
+     ══════════════════════════════════ -->
+<div id="view-thread" class="view">
+  <div class="topbar">
+    <button class="back-btn" onclick="showView('view-admin');renderAdminDash()" style="margin:0;">← Alle Nachrichten</button>
+    <div class="topbar-actions">
+      <button class="btn btn-danger" id="btn-delete-thread" onclick="deleteThread()" style="font-size:0.78rem;padding:0.5rem 0.9rem;">Löschen</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="thread-header" style="margin-bottom:1rem;"></div>
+    <div class="card" style="padding:1.2rem;" id="thread-messages"></div>
+    <div class="card mt-8" id="reply-area" style="display:none;">
+      <div class="field">
+        <label>Antwort schreiben</label>
+        <textarea id="reply-text" placeholder="Deine Antwort..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="sendReply()">Antwort senden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL: SETTINGS
+     ══════════════════════════════════ -->
+<div class="modal-bg" id="modal-settings">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-settings')">✕</button>
+    <h2 style="margin-bottom:0.2rem;">⚙ Einstellungen</h2>
+    <p class="text-muted" style="margin-bottom:1.2rem;">Nur du als Admin siehst und änderst das.</p>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Admin Passwort ändern</div>
+        <div class="settings-sub">Neues Passwort setzen</div>
+      </div>
+      <button class="btn btn-ghost" onclick="changePW()" style="font-size:0.78rem;">Ändern</button>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Neue Nachrichten erlauben</div>
+        <div class="settings-sub">Wenn aus, können keine neuen Nachrichten geschickt werden</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="toggle-open" checked onchange="saveSetting('open', this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Seiten-Titel</div>
+        <div class="settings-sub">Name der Seite im Browser</div>
+      </div>
+      <button class="btn btn-ghost" onclick="changeSiteTitle()" style="font-size:0.78rem;">Ändern</button>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">Alle Nachrichten löschen</div>
+        <div class="settings-sub">Nicht rückgängig zu machen!</div>
+      </div>
+      <button class="btn btn-danger" onclick="nukeAll()" style="font-size:0.78rem;padding:0.45rem 0.85rem;">Reset</button>
+    </div>
+
+    <hr class="divider">
+    <p style="font-size:0.72rem;color:var(--muted);text-align:center;">Alle Daten werden lokal in deinem Browser gespeichert (localStorage).<br>Öffne die Seite immer im selben Browser um alle Nachrichten zu sehen.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODAL: CHANGE PW
+     ══════════════════════════════════ -->
+<div class="modal-bg" id="modal-pw">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-pw')">✕</button>
+    <h2 style="margin-bottom:1rem;">Passwort ändern</h2>
+    <div class="field">
+      <label>Aktuelles Passwort</label>
+      <input type="password" id="pw-old" placeholder="••••••••">
+    </div>
+    <div class="field">
+      <label>Neues Passwort</label>
+      <input type="password" id="pw-new" placeholder="••••••••">
+    </div>
+    <div class="field">
+      <label>Wiederholen</label>
+      <input type="password" id="pw-rep" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="confirmChangePW()">Speichern</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════
+
+const DB_KEY   = '__anon_msg__';
+const SESS_KEY = '__anon_sess__';
+
+function getDB() {
+  try { return JSON.parse(localStorage.getItem(DB_KEY)) || initDB(); }
+  catch { return initDB(); }
+}
+
+function initDB() {
+  const db = {
+    password: 'Geschwister', 
+    settings: { open: true, title: 'anon.msg' },
+    threads: []           // { id, token, msgs:[{from,text,ts}], read:bool }
+  };
+  saveDB(db);
+  return db;
+}
+
+function saveDB(db) {
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+function isLoggedIn() {
+  return sessionStorage.getItem(SESS_KEY) === 'yes';
+}
+
+let currentThreadId = null;
+
+// ════════════════════════════════════════
+//  VIEWS
+// ════════════════════════════════════════
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════
+
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 2800);
+}
+
+// ════════════════════════════════════════
+//  TOKEN GENERATOR
+// ════════════════════════════════════════
+
+function genToken() {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let t = 'anon_';
+  for(let i=0;i<8;i++) t += chars[Math.floor(Math.random()*chars.length)];
+  return t;
+}
+
+// ════════════════════════════════════════
+//  SEND MESSAGE (public)
+// ════════════════════════════════════════
+
+document.getElementById('send-text').addEventListener('input', function() {
+  document.getElementById('send-char').textContent = this.value.length + ' / 2000';
+});
+
+function sendMessage() {
+  const db = getDB();
+  if(!db.settings.open) { toast('Neue Nachrichten sind gerade deaktiviert.','err'); return; }
+
+  const text = document.getElementById('send-text').value.trim();
+  if(!text) { toast('Bitte schreib etwas!','err'); return; }
+  if(text.length > 2000) { toast('Zu lang (max. 2000 Zeichen)','err'); return; }
+
+  const token = genToken();
+  const thread = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    token,
+    msgs: [{ from: 'sender', text, ts: Date.now() }],
+    read: false
+  };
+
+  db.threads.unshift(thread);
+  saveDB(db);
+
+  document.getElementById('send-text').value = '';
+  document.getElementById('send-char').textContent = '0 / 2000';
+  document.getElementById('my-key').textContent = token;
+  document.getElementById('send-result').style.display = 'block';
+  toast('Nachricht anonym gesendet!','ok');
+}
+
+function copyKey() {
+  const key = document.getElementById('my-key').textContent;
+  navigator.clipboard.writeText(key).then(() => toast('Schlüssel kopiert!','ok')).catch(()=>{});
+}
+
+// ════════════════════════════════════════
+//  CHECK REPLY (sender)
+// ════════════════════════════════════════
+
+function checkReply() {
+  const key = document.getElementById('reply-key-input').value.trim();
+  if(!key) { toast('Schlüssel eingeben','err'); return; }
+
+  const db = getDB();
+  const thread = db.threads.find(t => t.token === key);
+
+  const box = document.getElementById('reply-reader-content');
+  if(!thread) {
+    box.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><p>Kein Thread mit diesem Schlüssel gefunden.</p></div>`;
+  } else {
+    const replies = thread.msgs.filter(m => m.from === 'host');
+    if(replies.length === 0) {
+      box.innerHTML = `<div class="empty-state"><div class="es-icon">⏳</div><p>Noch keine Antwort. Schau später wieder vorbei!</p></div>`;
+    } else {
+      box.innerHTML = `
+        <h2 style="margin-bottom:0.3rem;">Antwort erhalten</h2>
+        <p class="text-muted" style="margin-bottom:1.2rem;">Nur du siehst das mit deinem Schlüssel.</p>
+        ${replies.map(m=>`
+          <div class="msg-wrap from-host">
+            <div class="msg-meta">${fmtDate(m.ts)}</div>
+            <div class="msg-bubble">${escHtml(m.text)}</div>
+          </div>
+        `).join('')}
+      `;
+    }
+  }
+  showView('view-reply-reader');
+}
+
+// ════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ════════════════════════════════════════
+
+function doLogin() {
+  const db = getDB();
+  const pw = document.getElementById('login-pw').value;
+  if(pw === db.password) {
+    sessionStorage.setItem(SESS_KEY, 'yes');
+    document.getElementById('login-pw').value = '';
+    showView('view-admin');
+    renderAdminDash();
+    toast('Willkommen zurück!','ok');
+  } else {
+    toast('Falsches Passwort','err');
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem(SESS_KEY);
+  showView('view-landing');
+  toast('Ausgeloggt');
+}
+
+function requireAdmin() {
+  if(!isLoggedIn()) { showView('view-login'); return false; }
+  return true;
+}
+
+// ════════════════════════════════════════
+//  ADMIN DASHBOARD
+// ════════════════════════════════════════
+
+function renderAdminDash() {
+  if(!requireAdmin()) return;
+  renderStats();
+  renderThreadList();
+}
+
+function renderStats() {
+  const db = getDB();
+  const total = db.threads.length;
+  const unread = db.threads.filter(t => !t.read).length;
+  const answered = db.threads.filter(t => t.msgs.some(m => m.from==='host')).length;
+
+  document.getElementById('admin-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Gesamt</div></div>
+    <div class="stat-card"><div class="stat-num">${unread}</div><div class="stat-lbl">Ungelesen</div></div>
+    <div class="stat-card"><div class="stat-num">${answered}</div><div class="stat-lbl">Beantwortet</div></div>
+  `;
+}
+
+function renderThreadList() {
+  const db = getDB();
+  const filter = document.getElementById('filter-sel').value;
+  let threads = [...db.threads];
+
+  if(filter==='unread') threads = threads.filter(t=>!t.read);
+  if(filter==='unanswered') threads = threads.filter(t=>!t.msgs.some(m=>m.from==='host'));
+
+  const list = document.getElementById('thread-list');
+  if(!threads.length) {
+    list.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>Keine Nachrichten</p></div>`;
+    return;
+  }
+
+  list.innerHTML = threads.map(t => {
+    const last = t.msgs[t.msgs.length-1];
+    const hasReply = t.msgs.some(m=>m.from==='host');
+    return `
+      <div class="thread-list-item ${!t.read?'unread':''}" onclick="openThread('${t.id}')">
+        <div class="tli-avatar">${t.token.slice(5,7).toUpperCase()}</div>
+        <div class="tli-info">
+          <div class="tli-top">
+            <span class="tli-token">${t.token}</span>
+            <span class="tli-time">${fmtDate(last.ts)}</span>
+          </div>
+          <div class="tli-preview">${hasReply?'✓ Beantwortet · ':''}${escHtml(last.text).slice(0,80)}${last.text.length>80?'…':''}</div>
+        </div>
+        ${!t.read?'<div class="unread-dot"></div>':''}
+      </div>
+    `;
+  }).join('');
+}
+
+function openThread(id) {
+  if(!requireAdmin()) return;
+  const db = getDB();
+  const thread = db.threads.find(t=>t.id===id);
+  if(!thread) return;
+
+  thread.read = true;
+  saveDB(db);
+  currentThreadId = id;
+
+  document.getElementById('thread-header').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.5rem;">
+      <div class="tli-avatar" style="width:40px;height:40px;">${thread.token.slice(5,7).toUpperCase()}</div>
+      <div>
+        <div class="tli-token" style="font-size:0.9rem;">${thread.token}</div>
+        <div class="text-muted">${thread.msgs.length} Nachricht${thread.msgs.length!==1?'en':''}</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('thread-messages').innerHTML = thread.msgs.map(m=>`
+    <div class="msg-wrap from-${m.from==='host'?'host':'sender'}">
+      <div class="msg-meta">${m.from==='host'?'Du · ':'Anonym · '}${fmtDate(m.ts)}</div>
+      <div class="msg-bubble">${escHtml(m.text)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('reply-area').style.display = 'block';
+  document.getElementById('reply-text').value = '';
+  showView('view-thread');
+}
+
+function sendReply() {
+  if(!requireAdmin()) return;
+  const text = document.getElementById('reply-text').value.trim();
+  if(!text) { toast('Leere Antwort','err'); return; }
+
+  const db = getDB();
+  const thread = db.threads.find(t=>t.id===currentThreadId);
+  if(!thread) return;
+
+  thread.msgs.push({ from:'host', text, ts: Date.now() });
+  saveDB(db);
+  openThread(currentThreadId); // re-render
+  toast('Antwort gesendet!','ok');
+}
+
+function deleteThread() {
+  if(!confirm('Thread wirklich löschen?')) return;
+  const db = getDB();
+  db.threads = db.threads.filter(t=>t.id!==currentThreadId);
+  saveDB(db);
+  showView('view-admin');
+  renderAdminDash();
+  toast('Gelöscht');
+}
+
+// ════════════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════════════
+
+function openSettings() {
+  const db = getDB();
+  document.getElementById('toggle-open').checked = db.settings.open !== false;
+  document.getElementById('modal-settings').classList.add('open');
+}
+
+function saveSetting(key, val) {
+  const db = getDB();
+  db.settings[key] = val;
+  saveDB(db);
+  toast('Gespeichert','ok');
+}
+
+function changePW() {
+  closeModal('modal-settings');
+  document.getElementById('modal-pw').classList.add('open');
+}
+
+function confirmChangePW() {
+  const db = getDB();
+  const old = document.getElementById('pw-old').value;
+  const nw  = document.getElementById('pw-new').value;
+  const rep = document.getElementById('pw-rep').value;
+
+  if(old !== db.password) { toast('Aktuelles Passwort falsch','err'); return; }
+  if(nw.length < 6) { toast('Mindestens 6 Zeichen','err'); return; }
+  if(nw !== rep) { toast('Passwörter stimmen nicht überein','err'); return; }
+
+  db.password = nw;
+  saveDB(db);
+  closeModal('modal-pw');
+  toast('Passwort geändert!','ok');
+}
+
+function changeSiteTitle() {
+  const t = prompt('Neuer Seiten-Titel:');
+  if(t && t.trim()) {
+    document.title = t.trim();
+    saveSetting('title', t.trim());
+  }
+}
+
+function nukeAll() {
+  if(!confirm('Wirklich ALLE Nachrichten für immer löschen?')) return;
+  const db = getDB();
+  db.threads = [];
+  saveDB(db);
+  closeModal('modal-settings');
+  renderAdminDash();
+  toast('Alle Nachrichten gelöscht','ok');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// click outside modal to close
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); });
+});
+
+// ════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function fmtDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if(diff < 60) return 'Gerade eben';
+  if(diff < 3600) return Math.floor(diff/60) + ' Min.';
+  if(diff < 86400) return Math.floor(diff/3600) + ' Std.';
+  return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+
+(function init() {
+  getDB(); // ensure DB exists
+  // apply saved title
+  const db = getDB();
+  if(db.settings.title) document.title = db.settings.title;
+
+  // If session was somehow preserved and user navigates back
+  if(isLoggedIn()) {
+    // stay on landing, don't auto-redirect
+  }
+})();
+</script>
+</body>
+</html>
