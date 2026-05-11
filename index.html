@@ -3,910 +3,1022 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Anonym schreiben</title>
+<title>anon.msg</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
 
-  :root {
-    --bg: #0a0a0f;
-    --surface: #13131a;
-    --surface2: #1c1c27;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.13);
-    --accent: #7c6af7;
-    --accent2: #a89bf5;
-    --text: #e8e6f0;
-    --muted: #6b6880;
-    --danger: #f06060;
-    --success: #5dd4a0;
-    --warn: #f0a050;
-  }
+:root {
+  --bg:       #080810;
+  --s1:       #0f0f1a;
+  --s2:       #161625;
+  --s3:       #1e1e30;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.11);
+  --accent:   #8b7ff5;
+  --accent2:  #b8aff8;
+  --accent3:  rgba(139,127,245,0.15);
+  --green:    #4ecb8d;
+  --red:      #f06b6b;
+  --yellow:   #f0b050;
+  --text:     #eceaf8;
+  --muted:    #5a5870;
+  --muted2:   #807e95;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
 
-  body {
-    font-family: 'Sora', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    line-height: 1.6;
-  }
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    background-size: 200px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* ── NOISE ── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size:256px;pointer-events:none;z-index:0;
+}
 
-  .glow-orb {
-    position: fixed;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(124,106,247,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .glow-orb.top { top: -200px; left: 50%; transform: translateX(-50%); }
-  .glow-orb.bot { bottom: -300px; right: -100px; background: radial-gradient(circle, rgba(93,212,160,0.05) 0%, transparent 70%); }
+/* ── ORBS ── */
+.orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px);}
+.orb1{width:500px;height:500px;top:-150px;left:-100px;background:rgba(139,127,245,0.07);}
+.orb2{width:400px;height:400px;bottom:-100px;right:-80px;background:rgba(78,203,141,0.05);}
 
-  .wrap {
-    position: relative;
-    z-index: 1;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem 4rem;
-  }
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;min-height:100vh;}
+.center{max-width:520px;margin:0 auto;padding:2rem 1.2rem 4rem;}
 
-  header {
-    text-align: center;
-    padding: 3rem 0 2.5rem;
-  }
+/* ── VIEWS ── */
+.view{display:none;}
+.view.active{display:block;}
 
-  .logo-mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--accent), #5dd4a0);
-    margin-bottom: 1.2rem;
-    font-size: 24px;
-  }
+/* ── TOPBAR ── */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.75rem 1.4rem;
+  background:rgba(8,8,16,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-brand{
+  font-family:'DM Mono',monospace;
+  font-size:.85rem;font-weight:500;
+  color:var(--accent2);letter-spacing:.08em;
+}
+.topbar-right{display:flex;gap:8px;align-items:center;}
 
-  header h1 {
-    font-family: 'Space Mono', monospace;
-    font-size: clamp(1.5rem, 4vw, 2rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 0.4rem;
-  }
+/* ── CARDS ── */
+.card{
+  background:var(--s1);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:1.4rem;
+  margin-bottom:.9rem;
+  transition:border-color .2s;
+}
+.card:hover{border-color:var(--border2);}
 
-  header p { color: var(--muted); font-size: 0.9rem; font-weight: 300; }
+/* ── INPUTS ── */
+input,textarea,select{
+  width:100%;
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:.88rem;
+  padding:.65rem .95rem;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  resize:none;
+}
+input:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(139,127,245,0.12);
+}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+textarea{min-height:110px;}
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-  .badge.anon { background: rgba(124,106,247,0.15); color: var(--accent2); border: 1px solid rgba(124,106,247,0.2); }
-  .badge.admin-badge { background: rgba(240,160,80,0.15); color: var(--warn); border: 1px solid rgba(240,160,80,0.2); }
-  .badge.dot::before { content: ''; display: block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+label{
+  display:block;
+  font-size:.72rem;font-weight:500;
+  color:var(--muted2);
+  letter-spacing:.06em;text-transform:uppercase;
+  margin-bottom:.35rem;
+}
+.field{margin-bottom:.9rem;}
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    transition: border-color 0.2s;
-  }
-  .card:hover { border-color: var(--border2); }
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:.6rem 1.2rem;border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;
+  cursor:pointer;border:none;transition:all .17s;
+  text-decoration:none;
+}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
 
-  input[type="text"], input[type="password"], textarea, select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Sora', sans-serif;
-    font-size: 0.9rem;
-    padding: 0.7rem 1rem;
-    outline: none;
-    transition: border-color 0.2s;
-    resize: none;
-  }
-  input:focus, textarea:focus { border-color: var(--accent); }
-  input::placeholder, textarea::placeholder { color: var(--muted); }
-  textarea { min-height: 120px; }
+.btn-primary{background:var(--accent);color:#fff;width:100%;}
+.btn-primary:hover:not(:disabled){background:var(--accent2);color:#12103a;}
 
-  label {
-    display: block;
-    font-size: 0.78rem;
-    color: var(--muted);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    margin-bottom: 0.4rem;
-  }
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border);}
+.btn-ghost:hover:not(:disabled){border-color:var(--border2);color:var(--text);}
 
-  .field { margin-bottom: 1rem; }
+.btn-danger{background:rgba(240,107,107,.12);color:var(--red);border:1px solid rgba(240,107,107,.2);}
+.btn-danger:hover{background:rgba(240,107,107,.2);}
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 0.65rem 1.4rem;
-    border-radius: 10px;
-    font-family: 'Sora', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: all 0.18s;
-  }
-  .btn:active { transform: scale(0.97); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-success{background:rgba(78,203,141,.12);color:var(--green);border:1px solid rgba(78,203,141,.2);}
 
-  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
-  .btn-primary:hover:not(:disabled) { background: var(--accent2); }
+.w100{width:100%;}
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    font-size: 0.82rem;
-  }
-  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+/* ── BADGES ── */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 9px;border-radius:99px;
+  font-size:.7rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
+}
+.badge-purple{background:var(--accent3);color:var(--accent2);border:1px solid rgba(139,127,245,.2);}
+.badge-yellow{background:rgba(240,176,80,.12);color:var(--yellow);border:1px solid rgba(240,176,80,.2);}
+.badge-green{background:rgba(78,203,141,.12);color:var(--green);border:1px solid rgba(78,203,141,.2);}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
 
-  .btn-danger { background: rgba(240,96,96,0.15); color: var(--danger); border: 1px solid rgba(240,96,96,0.2); }
-  .btn-danger:hover { background: rgba(240,96,96,0.25); }
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:1.4rem;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--s2);border:1px solid var(--border2);
+  border-radius:10px;padding:.6rem 1.3rem;
+  font-size:.83rem;z-index:999;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;pointer-events:none;
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.ok{border-color:rgba(78,203,141,.3);color:var(--green);}
+#toast.err{border-color:rgba(240,107,107,.3);color:var(--red);}
 
-  #toast {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 0.7rem 1.4rem;
-    font-size: 0.85rem;
-    color: var(--text);
-    z-index: 999;
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    white-space: nowrap;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); }
-  #toast.ok { border-color: rgba(93,212,160,0.3); color: var(--success); }
-  #toast.err { border-color: rgba(240,96,96,0.3); color: var(--danger); }
+/* ── SPINNER ── */
+.spin{
+  display:inline-block;width:15px;height:15px;
+  border:2px solid rgba(255,255,255,.15);border-top-color:currentColor;
+  border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle;
+}
+@keyframes rot{to{transform:rotate(360deg)}}
 
-  .view { display: none; }
-  .view.active { display: block; }
+/* ── DIVIDER ── */
+hr{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
 
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.8rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(10,10,15,0.9);
-    backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .topbar-brand { font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; }
-  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+/* ── MISC ── */
+h1{font-size:clamp(1.5rem,4vw,1.9rem);font-weight:600;letter-spacing:-.02em;}
+h2{font-size:1rem;font-weight:600;margin-bottom:.25rem;}
+h3{font-size:.88rem;font-weight:500;}
+.muted{color:var(--muted2);font-size:.82rem;}
+.mono{font-family:'DM Mono',monospace;}
+.mt8{margin-top:8px;}
+.mt16{margin-top:16px;}
+.flex{display:flex;}
+.gap8{gap:8px;}
+.center-text{text-align:center;}
 
-  .msg-wrap { margin-bottom: 1.2rem; }
-  .msg-meta { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.25rem; }
-  .msg-bubble {
-    max-width: 85%;
-    padding: 0.75rem 1rem;
-    border-radius: 14px;
-    font-size: 0.88rem;
-    line-height: 1.55;
-    word-break: break-word;
-  }
-  .from-sender .msg-bubble {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-bottom-left-radius: 4px;
-    margin-right: auto;
-  }
-  .from-host .msg-bubble {
-    background: rgba(124,106,247,0.2);
-    border: 1px solid rgba(124,106,247,0.25);
-    color: var(--accent2);
-    border-bottom-right-radius: 4px;
-    margin-left: auto;
-  }
-  .from-host .msg-meta { text-align: right; }
+.back-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  color:var(--muted2);font-size:.8rem;cursor:pointer;
+  border:none;background:none;padding:0;
+  font-family:'DM Sans',sans-serif;transition:color .15s;
+  margin-bottom:.9rem;
+}
+.back-btn:hover{color:var(--text);}
 
-  .thread-list-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 1rem 1.2rem;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .thread-list-item:hover { background: var(--surface2); }
-  .tli-avatar {
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px;
-    font-family: 'Space Mono', monospace;
-    color: var(--muted);
-    flex-shrink: 0;
-  }
-  .tli-info { flex: 1; min-width: 0; }
-  .tli-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
-  .tli-token { font-size: 0.8rem; font-weight: 500; font-family: 'Space Mono', monospace; color: var(--accent2); }
-  .tli-time { font-size: 0.72rem; color: var(--muted); }
-  .tli-preview { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.empty .ei{font-size:2.2rem;margin-bottom:.7rem;opacity:.35;}
 
-  .divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+/* ── HEADER HERO ── */
+.hero{text-align:center;padding:3.5rem 0 2.5rem;}
+.hero-icon{
+  width:54px;height:54px;border-radius:15px;
+  background:linear-gradient(135deg,var(--accent),var(--green));
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:1.1rem;
+}
+.hero h1{margin-bottom:.35rem;}
+.hero p{color:var(--muted2);font-size:.88rem;margin-bottom:.9rem;}
 
-  .key-box {
-    background: var(--surface2);
-    border: 1px dashed var(--border2);
-    border-radius: 10px;
-    padding: 0.8rem 1rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.82rem;
-    color: var(--accent2);
-    letter-spacing: 0.08em;
-    text-align: center;
-    cursor: pointer;
-    user-select: all;
-    transition: background 0.15s;
-  }
-  .key-box:hover { background: rgba(124,106,247,0.08); }
+/* ── AUTH TABS ── */
+.tabs{display:flex;gap:4px;background:var(--s2);border-radius:10px;padding:4px;margin-bottom:1.2rem;}
+.tab{flex:1;padding:.5rem;border-radius:7px;text-align:center;font-size:.82rem;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted2);transition:all .15s;font-family:'DM Sans',sans-serif;}
+.tab.active{background:var(--s3);color:var(--text);}
 
-  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1.2rem; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.9rem; text-align: center; }
-  .stat-num { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; }
-  .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+/* ── CHAT LIST ── */
+.chat-item{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:.95rem 1.1rem;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .15s;
+}
+.chat-item:hover{background:var(--s2);}
+.chat-item:last-child{border-bottom:none;}
 
-  .modal-bg {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(4px);
-    z-index: 200;
-    display: none; align-items: center; justify-content: center;
-    padding: 1rem;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 18px;
-    padding: 1.8rem;
-    width: 100%; max-width: 460px;
-    position: relative;
-  }
-  .modal-close {
-    position: absolute; top: 1rem; right: 1rem;
-    background: none; border: none; color: var(--muted);
-    font-size: 1.2rem; cursor: pointer; padding: 2px 6px;
-    border-radius: 6px; transition: color 0.15s;
-  }
-  .modal-close:hover { color: var(--text); }
+.chat-avatar{
+  width:38px;height:38px;border-radius:11px;
+  background:var(--s3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted2);
+  flex-shrink:0;
+}
+.chat-info{flex:1;min-width:0;}
+.chat-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.chat-name{font-size:.82rem;font-weight:500;font-family:'DM Mono',monospace;color:var(--accent2);}
+.chat-time{font-size:.7rem;color:var(--muted);}
+.chat-preview{font-size:.8rem;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.unread-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;}
 
-  .settings-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.9rem 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .settings-row:last-child { border-bottom: none; }
-  .settings-label { font-size: 0.88rem; }
-  .settings-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+/* ── MESSAGES ── */
+.msg-wrap{margin-bottom:1rem;}
+.msg-meta{font-size:.69rem;color:var(--muted);margin-bottom:.22rem;}
+.msg-bubble{
+  display:inline-block;max-width:82%;
+  padding:.65rem .95rem;border-radius:13px;
+  font-size:.86rem;line-height:1.55;word-break:break-word;
+}
+.from-user .msg-meta{text-align:left;}
+.from-user .msg-bubble{
+  background:var(--s3);border:1px solid var(--border);
+  border-bottom-left-radius:4px;
+}
+.from-host .msg-meta{text-align:right;}
+.from-host{text-align:right;}
+.from-host .msg-bubble{
+  background:rgba(139,127,245,.18);
+  border:1px solid rgba(139,127,245,.22);
+  color:var(--accent2);
+  border-bottom-right-radius:4px;
+}
 
-  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
-  .toggle input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background: var(--surface2); border: 1px solid var(--border2);
-    border-radius: 22px; transition: 0.2s;
-  }
-  .toggle-slider::before {
-    content: ''; position: absolute;
-    height: 14px; width: 14px; left: 3px; bottom: 3px;
-    background: var(--muted); border-radius: 50%; transition: 0.2s;
-  }
-  .toggle input:checked + .toggle-slider { background: rgba(124,106,247,0.2); border-color: var(--accent); }
-  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--accent); }
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem;}
+.stat{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:.85rem;text-align:center;}
+.stat-n{font-family:'DM Mono',monospace;font-size:1.35rem;font-weight:500;}
+.stat-l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
 
-  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
-  .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4; }
+/* ── MODAL ── */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);
+  backdrop-filter:blur(5px);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:1rem;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:var(--s1);border:1px solid var(--border2);
+  border-radius:18px;padding:1.7rem;
+  width:100%;max-width:440px;position:relative;
+}
+.modal-x{
+  position:absolute;top:.9rem;right:.9rem;
+  background:none;border:none;color:var(--muted);
+  font-size:1.1rem;cursor:pointer;padding:3px 7px;border-radius:6px;
+  transition:color .15s;
+}
+.modal-x:hover{color:var(--text);}
 
-  .back-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: var(--muted); font-size: 0.82rem; cursor: pointer;
-    border: none; background: none; padding: 0;
-    font-family: 'Sora', sans-serif; transition: color 0.15s;
-    margin-bottom: 1rem;
-  }
-  .back-btn:hover { color: var(--text); }
+/* ── NEW CHAT BTN ── */
+.fab{
+  position:fixed;bottom:1.5rem;right:1.5rem;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;cursor:pointer;border:none;
+  box-shadow:0 4px 20px rgba(139,127,245,.4);
+  transition:all .2s;z-index:50;
+}
+.fab:hover{background:var(--accent2);transform:scale(1.07);}
 
-  h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.3rem; }
-  .text-muted { color: var(--muted); font-size: 0.82rem; }
-  .mt-8 { margin-top: 8px; }
-  .mt-16 { margin-top: 16px; }
-  .w100 { width: 100%; }
+/* ── SETTINGS ROWS ── */
+.srow{display:flex;align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--border);}
+.srow:last-child{border-bottom:none;}
+.srow-l{font-size:.86rem;}
+.srow-sub{font-size:.73rem;color:var(--muted2);margin-top:2px;}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.tslider{position:absolute;cursor:pointer;inset:0;background:var(--s3);border:1px solid var(--border2);border-radius:22px;transition:.2s;}
+.tslider::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.2s;}
+.toggle input:checked+.tslider{background:var(--accent3);border-color:var(--accent);}
+.toggle input:checked+.tslider::before{transform:translateX(18px);background:var(--accent);}
 
-  /* Spinner */
-  .spinner {
-    display: inline-block;
-    width: 16px; height: 16px;
-    border: 2px solid rgba(255,255,255,0.2);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    vertical-align: middle;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  @media (max-width: 480px) {
-    .wrap { padding: 1rem 1rem 3rem; }
-    header { padding: 2rem 0 1.8rem; }
-  }
+@media(max-width:480px){
+  .center{padding:1rem 1rem 3rem;}
+  .hero{padding:2.2rem 0 1.8rem;}
+}
 </style>
 </head>
 <body>
-
-<div class="glow-orb top"></div>
-<div class="glow-orb bot"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
 <div id="toast"></div>
 
-<!-- ══ VIEW: LANDING ══ -->
-<div id="view-landing" class="view active">
-  <div class="wrap">
-    <header>
-      <div class="logo-mark">✦</div>
+<!-- ════════════════════════════════
+     VIEW: LANDING / AUTH
+     ════════════════════════════════ -->
+<div id="view-auth" class="view active app">
+  <div class="center">
+    <div class="hero">
+      <div class="hero-icon">✦</div>
       <h1>anon.msg</h1>
-      <p>Schreib mir anonym — ich antworte dir direkt.</p>
-      <br>
-      <span class="badge anon dot">Vollständig anonym</span>
-    </header>
-
-    <div class="card">
-      <h2 style="margin-bottom:0.2rem;">Neue Nachricht senden</h2>
-      <p class="text-muted" style="margin-bottom:1.2rem;">Dein Name wird niemals gespeichert oder angezeigt.</p>
-      <div class="field">
-        <label>Deine Nachricht</label>
-        <textarea id="send-text" placeholder="Was möchtest du sagen?"></textarea>
-      </div>
-      <div id="send-char" class="text-muted" style="text-align:right;font-size:0.72rem;margin-top:-8px;margin-bottom:12px;">0 / 2000</div>
-      <button class="btn btn-primary" id="btn-send" onclick="sendMessage()">
-        <span>✦</span> Anonym senden
-      </button>
-      <div id="send-result" style="display:none;" class="mt-16">
-        <hr class="divider">
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem;">Dein anonymer Antwort-Schlüssel (speicher ihn!):</p>
-        <div class="key-box" id="my-key" onclick="copyKey()" title="Klicken zum Kopieren"></div>
-        <p style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem;text-align:center;">Mit diesem Schlüssel kannst du Antworten lesen</p>
-      </div>
+      <p>Schreib anonym — erhalte echte Antworten.</p>
+      <span class="badge badge-purple">Vollständig anonym</span>
     </div>
 
     <div class="card">
-      <h2 style="margin-bottom:0.2rem;">Antwort lesen</h2>
-      <p class="text-muted" style="margin-bottom:1rem;">Gib deinen anonymen Schlüssel ein.</p>
-      <div class="field">
-        <label>Dein Schlüssel</label>
-        <input type="text" id="reply-key-input" placeholder="z.B. anon_a1b2c3d4" maxlength="18">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('login')">Einloggen</button>
+        <button class="tab" onclick="switchTab('register')">Registrieren</button>
+        <button class="tab" onclick="switchTab('guest')">Als Gast</button>
       </div>
-      <button class="btn btn-ghost w100" onclick="checkReply()">Antwort abrufen →</button>
+
+      <!-- LOGIN -->
+      <div id="tab-login">
+        <div class="field">
+          <label>E-Mail</label>
+          <input type="text" id="login-email" placeholder="deine@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div class="field">
+          <label>Passwort</label>
+          <input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Einloggen</button>
+        <p class="muted mt8 center-text" style="font-size:.73rem;">Du bleibst anonym — deine E-Mail sieht der Host nie.</p>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="tab-register" style="display:none;">
+        <div class="field">
+          <label>E-Mail</label>
+          <input type="text" id="reg-email" placeholder="deine@email.com">
+        </div>
+        <div class="field">
+          <label>Passwort</label>
+          <input type="password" id="reg-pw" placeholder="Mindestens 6 Zeichen">
+        </div>
+        <button class="btn btn-primary" id="btn-reg" onclick="doRegister()">Account erstellen</button>
+        <p class="muted mt8 center-text" style="font-size:.73rem;">Deine E-Mail wird niemals an den Host weitergegeben.</p>
+      </div>
+
+      <!-- GUEST -->
+      <div id="tab-guest" style="display:none;">
+        <p class="muted" style="margin-bottom:1rem;line-height:1.6;">Als Gast kannst du eine einmalige anonyme Nachricht schicken — ohne Account. Du bekommst einen Schlüssel um Antworten zu lesen.</p>
+        <div class="field">
+          <label>Deine Nachricht</label>
+          <textarea id="guest-text" placeholder="Was möchtest du sagen?"></textarea>
+        </div>
+        <button class="btn btn-primary" id="btn-guest" onclick="sendGuestMsg()">Anonym senden</button>
+        <div id="guest-result" style="display:none;" class="mt16">
+          <hr>
+          <p class="muted" style="margin-bottom:.4rem;font-size:.78rem;">Dein Schlüssel zum Antworten lesen:</p>
+          <div id="guest-key" onclick="copyGuestKey()" style="background:var(--s2);border:1px dashed var(--border2);border-radius:9px;padding:.7rem 1rem;font-family:'DM Mono',monospace;font-size:.8rem;color:var(--accent2);text-align:center;cursor:pointer;letter-spacing:.06em;" title="Klicken zum Kopieren"></div>
+          <p class="muted center-text" style="margin-top:.4rem;font-size:.7rem;">Klicken zum Kopieren — danach hier eingeben um Antworten zu lesen</p>
+          <div class="field mt8">
+            <label>Antwort abrufen</label>
+            <input type="text" id="guest-check-key" placeholder="Schlüssel eingeben">
+          </div>
+          <button class="btn btn-ghost w100" onclick="checkGuestReply()">Antwort prüfen →</button>
+        </div>
+      </div>
     </div>
 
-    <div style="text-align:center;padding-top:1rem;">
-      <button class="btn btn-ghost" onclick="showView('view-login')" style="font-size:0.75rem;color:var(--muted);">
-        🔐 Host / Admin Login
-      </button>
+    <div style="text-align:center;padding-top:.5rem;">
+      <button class="btn btn-ghost" onclick="showView('view-admin-login')" style="font-size:.73rem;color:var(--muted);">🔐 Host Login</button>
     </div>
   </div>
 </div>
 
-<!-- ══ VIEW: REPLY READER ══ -->
-<div id="view-reply-reader" class="view">
-  <div class="wrap">
-    <button class="back-btn" onclick="showView('view-landing')">← Zurück</button>
-    <div class="card" id="reply-reader-content"></div>
+<!-- ════════════════════════════════
+     VIEW: USER DASHBOARD
+     ════════════════════════════════ -->
+<div id="view-user" class="view app">
+  <div class="topbar">
+    <span class="topbar-brand">anon.msg</span>
+    <div class="topbar-right">
+      <span class="badge badge-purple">Anonym</span>
+      <button class="btn btn-ghost" onclick="doUserLogout()" style="font-size:.76rem;padding:.45rem .85rem;">Logout</button>
+    </div>
+  </div>
+  <div class="center">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;padding-top:.5rem;">
+      <h2 style="margin:0;">Meine Chats</h2>
+      <button class="btn btn-ghost" onclick="openNewChat()" style="font-size:.78rem;padding:.45rem .85rem;">+ Neuer Chat</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div id="user-chat-list"></div>
+    </div>
   </div>
 </div>
 
-<!-- ══ VIEW: LOGIN ══ -->
-<div id="view-login" class="view">
-  <div class="wrap">
-    <button class="back-btn" onclick="showView('view-landing')">← Zurück</button>
-    <div class="card" style="max-width:360px;margin:0 auto;">
-      <div style="text-align:center;margin-bottom:1.5rem;">
-        <div style="font-size:2rem;margin-bottom:0.5rem;">🔐</div>
-        <h2>Admin Login</h2>
-        <p class="text-muted">Nur für den Host</p>
+<!-- ════════════════════════════════
+     VIEW: USER CHAT DETAIL
+     ════════════════════════════════ -->
+<div id="view-user-chat" class="view app">
+  <div class="topbar">
+    <button class="back-btn" onclick="showView('view-user');loadUserChats()" style="margin:0;">← Zurück</button>
+    <div id="uchat-badge"></div>
+  </div>
+  <div class="center">
+    <div id="uchat-msgs" style="margin-bottom:.8rem;padding-top:.5rem;"></div>
+    <div class="card">
+      <div class="field">
+        <label>Nachricht schreiben</label>
+        <textarea id="uchat-input" placeholder="Deine Nachricht..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="btn-uchat-send" onclick="sendUserMsg()">Senden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     VIEW: ADMIN LOGIN
+     ════════════════════════════════ -->
+<div id="view-admin-login" class="view app">
+  <div class="center">
+    <button class="back-btn" onclick="showView('view-auth')" style="margin-top:1rem;">← Zurück</button>
+    <div class="card" style="max-width:340px;margin:0 auto;">
+      <div class="center-text" style="margin-bottom:1.3rem;">
+        <div style="font-size:1.8rem;margin-bottom:.4rem;">🔐</div>
+        <h2>Host Login</h2>
+        <p class="muted">Nur für dich</p>
       </div>
       <div class="field">
         <label>Passwort</label>
-        <input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()">
       </div>
-      <button class="btn btn-primary" onclick="doLogin()">Einloggen</button>
+      <button class="btn btn-primary" onclick="doAdminLogin()">Einloggen</button>
     </div>
   </div>
 </div>
 
-<!-- ══ VIEW: ADMIN DASHBOARD ══ -->
-<div id="view-admin" class="view">
+<!-- ════════════════════════════════
+     VIEW: ADMIN DASHBOARD
+     ════════════════════════════════ -->
+<div id="view-admin" class="view app">
   <div class="topbar">
     <span class="topbar-brand">anon.msg</span>
-    <div class="topbar-actions">
-      <span class="badge admin-badge dot">Admin</span>
-      <button class="btn btn-ghost" onclick="openSettings()">⚙</button>
-      <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
+    <div class="topbar-right">
+      <span class="badge badge-yellow">Admin</span>
+      <button class="btn btn-ghost" onclick="openAdminSettings()" style="font-size:.78rem;padding:.45rem .75rem;">⚙</button>
+      <button class="btn btn-ghost" onclick="doAdminLogout()" style="font-size:.76rem;padding:.45rem .85rem;">Logout</button>
     </div>
   </div>
-  <div class="wrap">
-    <div class="stats-row" id="admin-stats"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.8rem;">
-      <h2 style="margin-bottom:0;">Nachrichten</h2>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-ghost" onclick="renderAdminDash()" style="font-size:0.78rem;padding:0.45rem 0.8rem;">↻ Neu laden</button>
-        <select id="filter-sel" onchange="renderThreadList(allThreads)" style="width:auto;padding:0.4rem 0.7rem;font-size:0.8rem;">
+  <div class="center">
+    <div class="stats" id="admin-stats"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+      <h2 style="margin:0;">Nachrichten</h2>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost" onclick="loadAdminChats()" style="font-size:.74rem;padding:.4rem .7rem;">↻</button>
+        <select id="admin-filter" onchange="renderAdminList()" style="width:auto;padding:.38rem .7rem;font-size:.78rem;">
           <option value="all">Alle</option>
           <option value="unread">Ungelesen</option>
           <option value="unanswered">Ohne Antwort</option>
+          <option value="guest">Gäste</option>
+          <option value="user">Mit Account</option>
         </select>
       </div>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
-      <div id="thread-list"></div>
+      <div id="admin-chat-list"></div>
     </div>
   </div>
 </div>
 
-<!-- ══ VIEW: THREAD DETAIL ══ -->
-<div id="view-thread" class="view">
+<!-- ════════════════════════════════
+     VIEW: ADMIN CHAT DETAIL
+     ════════════════════════════════ -->
+<div id="view-admin-chat" class="view app">
   <div class="topbar">
-    <button class="back-btn" onclick="showView('view-admin');renderAdminDash()" style="margin:0;">← Alle Nachrichten</button>
-    <button class="btn btn-danger" onclick="deleteThread()" style="font-size:0.78rem;padding:0.5rem 0.9rem;">Löschen</button>
+    <button class="back-btn" onclick="showView('view-admin');loadAdminChats()" style="margin:0;">← Alle Chats</button>
+    <button class="btn btn-danger" onclick="deleteAdminChat()" style="font-size:.75rem;padding:.45rem .85rem;">Löschen</button>
   </div>
-  <div class="wrap">
-    <div id="thread-header" style="margin-bottom:1rem;"></div>
-    <div class="card" style="padding:1.2rem;" id="thread-messages"></div>
-    <div class="card mt-8">
+  <div class="center">
+    <div id="achat-header" style="padding-top:.5rem;margin-bottom:.8rem;"></div>
+    <div id="achat-msgs" style="margin-bottom:.8rem;"></div>
+    <div class="card">
       <div class="field">
-        <label>Antwort schreiben</label>
-        <textarea id="reply-text" placeholder="Deine Antwort..."></textarea>
+        <label>Antwort</label>
+        <textarea id="achat-input" placeholder="Deine Antwort..."></textarea>
       </div>
-      <button class="btn btn-primary" id="btn-reply" onclick="sendReply()">Antwort senden</button>
+      <button class="btn btn-primary" id="btn-achat-send" onclick="sendAdminReply()">Antwort senden</button>
     </div>
   </div>
 </div>
 
-<!-- ══ MODAL: SETTINGS ══ -->
+<!-- ════════════════════════════════
+     MODAL: ADMIN SETTINGS
+     ════════════════════════════════ -->
 <div class="modal-bg" id="modal-settings">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('modal-settings')">✕</button>
-    <h2 style="margin-bottom:0.2rem;">⚙ Einstellungen</h2>
-    <p class="text-muted" style="margin-bottom:1.2rem;">Nur du als Admin siehst und änderst das.</p>
-    <div class="settings-row">
-      <div>
-        <div class="settings-label">Admin Passwort ändern</div>
-        <div class="settings-sub">Neues Passwort setzen</div>
-      </div>
-      <button class="btn btn-ghost" onclick="changePW()" style="font-size:0.78rem;">Ändern</button>
+    <button class="modal-x" onclick="closeModal('modal-settings')">✕</button>
+    <h2 style="margin-bottom:.2rem;">⚙ Einstellungen</h2>
+    <p class="muted" style="margin-bottom:1.1rem;">Nur du siehst das.</p>
+    <div class="srow">
+      <div><div class="srow-l">Passwort ändern</div></div>
+      <button class="btn btn-ghost" onclick="openChangePW()" style="font-size:.76rem;">Ändern</button>
     </div>
-    <div class="settings-row">
+    <div class="srow">
       <div>
-        <div class="settings-label">Neue Nachrichten erlauben</div>
-        <div class="settings-sub">Wenn aus, können keine neuen Nachrichten geschickt werden</div>
+        <div class="srow-l">Neue Nachrichten erlauben</div>
+        <div class="srow-sub">Wenn aus, können keine neuen Chats gestartet werden</div>
       </div>
       <label class="toggle">
-        <input type="checkbox" id="toggle-open" checked onchange="saveSetting('open', this.checked)">
-        <span class="toggle-slider"></span>
+        <input type="checkbox" id="toggle-open" checked onchange="saveSetting('open',this.checked)">
+        <span class="tslider"></span>
       </label>
     </div>
-    <div class="settings-row">
-      <div>
-        <div class="settings-label">Alle Nachrichten löschen</div>
-        <div class="settings-sub">Nicht rückgängig zu machen!</div>
-      </div>
-      <button class="btn btn-danger" onclick="nukeAll()" style="font-size:0.78rem;padding:0.45rem 0.85rem;">Reset</button>
+    <div class="srow">
+      <div><div class="srow-l">Alle Daten löschen</div><div class="srow-sub">Nicht rückgängig!</div></div>
+      <button class="btn btn-danger" onclick="nukeAll()" style="font-size:.74rem;padding:.4rem .8rem;">Reset</button>
     </div>
-    <hr class="divider">
-    <p style="font-size:0.72rem;color:var(--muted);text-align:center;">Nachrichten werden in der Supabase Datenbank gespeichert.<br>Von jedem Gerät und WLAN abrufbar.</p>
+    <hr>
+    <p class="muted center-text" style="font-size:.7rem;">Nutzer-E-Mails sind nur in Supabase sichtbar — du als Host siehst sie nie.</p>
   </div>
 </div>
 
-<!-- ══ MODAL: CHANGE PW ══ -->
+<!-- ════════════════════════════════
+     MODAL: CHANGE PW
+     ════════════════════════════════ -->
 <div class="modal-bg" id="modal-pw">
   <div class="modal">
-    <button class="modal-close" onclick="closeModal('modal-pw')">✕</button>
+    <button class="modal-x" onclick="closeModal('modal-pw')">✕</button>
     <h2 style="margin-bottom:1rem;">Passwort ändern</h2>
-    <div class="field">
-      <label>Aktuelles Passwort</label>
-      <input type="password" id="pw-old" placeholder="••••••••">
-    </div>
-    <div class="field">
-      <label>Neues Passwort</label>
-      <input type="password" id="pw-new" placeholder="••••••••">
-    </div>
-    <div class="field">
-      <label>Wiederholen</label>
-      <input type="password" id="pw-rep" placeholder="••••••••">
-    </div>
+    <div class="field"><label>Aktuelles Passwort</label><input type="password" id="pw-old" placeholder="••••••••"></div>
+    <div class="field"><label>Neues Passwort</label><input type="password" id="pw-new" placeholder="••••••••"></div>
+    <div class="field"><label>Wiederholen</label><input type="password" id="pw-rep" placeholder="••••••••"></div>
     <button class="btn btn-primary" onclick="confirmChangePW()">Speichern</button>
   </div>
 </div>
 
+<!-- ════════════════════════════════
+     MODAL: NEW CHAT
+     ════════════════════════════════ -->
+<div class="modal-bg" id="modal-new-chat">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('modal-new-chat')">✕</button>
+    <h2 style="margin-bottom:.3rem;">Neuer anonymer Chat</h2>
+    <p class="muted" style="margin-bottom:1rem;">Dieser Chat ist komplett anonym — der Host sieht nie wer du bist.</p>
+    <div class="field"><label>Erste Nachricht</label><textarea id="new-chat-text" placeholder="Womit möchtest du starten?"></textarea></div>
+    <button class="btn btn-primary" id="btn-new-chat" onclick="createNewChat()">Chat starten</button>
+  </div>
+</div>
+
 <script>
-// ════════════════════════════════════════
-//  SUPABASE CONFIG  ← hier sind deine Keys
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════
 const SUPABASE_URL = 'https://oyybigvrnhrffasugupg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Bd1JH9xtc4T0UGq5WPi_oA_VwStHt_M'; // ← ersetze das!
+const SUPABASE_KEY = 'sb_publishable_Bd1JH9xtc4T0UGq5WPi_oA_VwStHt_M'; // ← ersetzen!
+const ADMIN_SESS   = '__anon_admin__';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ════════════════════════════════════════
-//  ADMIN PASSWORD (in Supabase settings Tabelle gespeichert)
-// ════════════════════════════════════════
-const SESS_KEY = '__anon_sess__';
-let allThreads = [];
-let currentThreadId = null;
+let currentUser   = null;
+let currentChatId = null;
+let allAdminChats = [];
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  VIEWS
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
 }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  TOAST
-// ════════════════════════════════════════
-let toastTimer;
+// ═══════════════════════════════════════════════
+let tt;
 function toast(msg, type='') {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.className = '', 2800);
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(tt); tt = setTimeout(() => el.className = '', 2700);
 }
 
-// ════════════════════════════════════════
-//  TOKEN GENERATOR
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+function fmtDate(ts) {
+  const d = new Date(ts), diff = (Date.now()-d)/1000;
+  if(diff<60) return 'Gerade';
+  if(diff<3600) return Math.floor(diff/60)+' Min.';
+  if(diff<86400) return Math.floor(diff/3600)+' Std.';
+  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
 function genToken() {
-  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
-  let t = 'anon_';
-  for(let i=0;i<8;i++) t += chars[Math.floor(Math.random()*chars.length)];
-  return t;
+  const c='abcdefghjkmnpqrstuvwxyz23456789'; let t='anon_';
+  for(let i=0;i<8;i++) t+=c[Math.floor(Math.random()*c.length)]; return t;
+}
+function genAnonName() {
+  const adj=['Stiller','Offener','Freier','Ruhiger','Ehrlicher'];
+  const noun=['Gedanke','Moment','Freund','Stern','Weg'];
+  return adj[Math.floor(Math.random()*adj.length)]+' '+noun[Math.floor(Math.random()*noun.length)];
+}
+function btnLoad(id, text) {
+  const b = document.getElementById(id);
+  if(b) { b.disabled=true; b.innerHTML=`<span class="spin"></span> ${text}`; }
+}
+function btnReset(id, text) {
+  const b = document.getElementById(id);
+  if(b) { b.disabled=false; b.innerHTML=text; }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); }));
+
+// ═══════════════════════════════════════════════
+//  AUTH TABS
+// ═══════════════════════════════════════════════
+function switchTab(t) {
+  ['login','register','guest'].forEach(x => {
+    document.getElementById('tab-'+x).style.display = x===t ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['login','register','guest'][i]===t);
+  });
 }
 
-// ════════════════════════════════════════
-//  SEND MESSAGE (public)
-// ════════════════════════════════════════
-document.getElementById('send-text').addEventListener('input', function() {
-  document.getElementById('send-char').textContent = this.value.length + ' / 2000';
-});
+// ═══════════════════════════════════════════════
+//  USER AUTH
+// ═══════════════════════════════════════════════
+async function doRegister() {
+  const email = document.getElementById('reg-email').value.trim();
+  const pw    = document.getElementById('reg-pw').value;
+  if(!email||!pw) { toast('Bitte alles ausfüllen','err'); return; }
+  if(pw.length<6) { toast('Passwort min. 6 Zeichen','err'); return; }
+  btnLoad('btn-reg','Registrieren...');
+  const { error } = await sb.auth.signUp({ email, password:pw });
+  btnReset('btn-reg','Account erstellen');
+  if(error) { toast(error.message,'err'); return; }
+  toast('Fast fertig! Bitte bestätige deine E-Mail.','ok');
+}
 
-async function sendMessage() {
-  const text = document.getElementById('send-text').value.trim();
-  if(!text) { toast('Bitte schreib etwas!', 'err'); return; }
-  if(text.length > 2000) { toast('Zu lang (max. 2000 Zeichen)', 'err'); return; }
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  if(!email||!pw) { toast('Bitte alles ausfüllen','err'); return; }
+  btnLoad('btn-login','Einloggen...');
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pw });
+  btnReset('btn-login','Einloggen');
+  if(error) { toast('Falsches Passwort oder E-Mail','err'); return; }
+  currentUser = data.user;
+  showView('view-user');
+  loadUserChats();
+  toast('Willkommen!','ok');
+}
 
-  // Check if open
-  const { data: cfg } = await sb.from('settings').select('value').eq('key','open').single();
-  if(cfg && cfg.value === 'false') { toast('Neue Nachrichten sind gerade deaktiviert.', 'err'); return; }
+async function doUserLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  showView('view-auth');
+  toast('Ausgeloggt');
+}
 
-  const btn = document.getElementById('btn-send');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Senden...';
+// ═══════════════════════════════════════════════
+//  GUEST
+// ═══════════════════════════════════════════════
+async function sendGuestMsg() {
+  const text = document.getElementById('guest-text').value.trim();
+  if(!text) { toast('Bitte schreib etwas','err'); return; }
 
+  const cfg = await getSetting('open');
+  if(cfg==='false') { toast('Neue Nachrichten sind gerade deaktiviert','err'); return; }
+
+  btnLoad('btn-guest','Senden...');
   const token = genToken();
-  const msgs = [{ from: 'sender', text, ts: Date.now() }];
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  const id = Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const msgs = [{ from:'user', text, ts:Date.now() }];
 
-  const { error } = await sb.from('threads').insert({ id, token, msgs, read: false });
+  const { error } = await sb.from('chats').insert({
+    id, token, msgs, read:false, type:'guest',
+    anon_name: 'Gast', user_id: null
+  });
+  btnReset('btn-guest','Anonym senden');
+  if(error) { toast('Fehler: '+error.message,'err'); return; }
 
-  btn.disabled = false;
-  btn.innerHTML = '<span>✦</span> Anonym senden';
-
-  if(error) { toast('Fehler beim Senden: ' + error.message, 'err'); return; }
-
-  document.getElementById('send-text').value = '';
-  document.getElementById('send-char').textContent = '0 / 2000';
-  document.getElementById('my-key').textContent = token;
-  document.getElementById('send-result').style.display = 'block';
-  toast('Nachricht anonym gesendet!', 'ok');
+  document.getElementById('guest-text').value='';
+  document.getElementById('guest-key').textContent = token;
+  document.getElementById('guest-result').style.display='block';
+  toast('Anonym gesendet!','ok');
 }
 
-function copyKey() {
-  const key = document.getElementById('my-key').textContent;
-  navigator.clipboard.writeText(key).then(() => toast('Schlüssel kopiert!', 'ok')).catch(()=>{});
+function copyGuestKey() {
+  navigator.clipboard.writeText(document.getElementById('guest-key').textContent)
+    .then(()=>toast('Schlüssel kopiert!','ok'));
 }
 
-// ════════════════════════════════════════
-//  CHECK REPLY (sender liest Antwort)
-// ════════════════════════════════════════
-async function checkReply() {
-  const key = document.getElementById('reply-key-input').value.trim();
-  if(!key) { toast('Schlüssel eingeben', 'err'); return; }
+async function checkGuestReply() {
+  const key = document.getElementById('guest-check-key').value.trim();
+  if(!key) { toast('Schlüssel eingeben','err'); return; }
+  const { data, error } = await sb.from('chats').select('*').eq('token',key).single();
+  if(error||!data) { toast('Kein Chat mit diesem Schlüssel gefunden','err'); return; }
+  const replies = data.msgs.filter(m=>m.from==='host');
+  if(!replies.length) { toast('Noch keine Antwort — schau später wieder!'); return; }
+  // Show in modal
+  currentChatId = data.id;
+  currentUser = { isGuest:true };
+  loadUserChatView(data);
+  showView('view-user-chat');
+}
 
-  const box = document.getElementById('reply-reader-content');
-  box.innerHTML = '<div class="empty-state"><span class="spinner"></span></div>';
-  showView('view-reply-reader');
-
-  const { data: thread, error } = await sb.from('threads').select('*').eq('token', key).single();
-
-  if(error || !thread) {
-    box.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><p>Kein Thread mit diesem Schlüssel gefunden.</p></div>`;
+// ═══════════════════════════════════════════════
+//  USER CHATS
+// ═══════════════════════════════════════════════
+async function loadUserChats() {
+  if(!currentUser) return;
+  document.getElementById('user-chat-list').innerHTML = '<div class="empty"><span class="spin"></span></div>';
+  const { data, error } = await sb.from('chats').select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at',{ascending:false});
+  if(error) { toast('Fehler: '+error.message,'err'); return; }
+  const list = document.getElementById('user-chat-list');
+  if(!data||!data.length) {
+    list.innerHTML='<div class="empty"><div class="ei">💬</div><p>Noch keine Chats. Starte einen neuen!</p></div>';
     return;
   }
-
-  const replies = thread.msgs.filter(m => m.from === 'host');
-  if(replies.length === 0) {
-    box.innerHTML = `<div class="empty-state"><div class="es-icon">⏳</div><p>Noch keine Antwort. Schau später wieder vorbei!</p></div>`;
-  } else {
-    box.innerHTML = `
-      <h2 style="margin-bottom:0.3rem;">Antwort erhalten</h2>
-      <p class="text-muted" style="margin-bottom:1.2rem;">Nur du siehst das mit deinem Schlüssel.</p>
-      ${replies.map(m=>`
-        <div class="msg-wrap from-host">
-          <div class="msg-meta">Antwort · ${fmtDate(m.ts)}</div>
-          <div class="msg-bubble">${escHtml(m.text)}</div>
+  list.innerHTML = data.map(c => {
+    const last = c.msgs[c.msgs.length-1];
+    const hasNew = c.msgs.some(m=>m.from==='host'&&!m.seenByUser);
+    return `
+      <div class="chat-item" onclick="openUserChat('${c.id}')">
+        <div class="chat-avatar">${c.anon_name.slice(0,2).toUpperCase()}</div>
+        <div class="chat-info">
+          <div class="chat-top">
+            <span class="chat-name">${esc(c.anon_name)}</span>
+            <span class="chat-time">${fmtDate(last.ts)}</span>
+          </div>
+          <div class="chat-preview">${esc(last.text).slice(0,70)}${last.text.length>70?'…':''}</div>
         </div>
-      `).join('')}
-    `;
-  }
+        ${hasNew?'<div class="unread-dot"></div>':''}
+      </div>`;
+  }).join('');
 }
 
-// ════════════════════════════════════════
-//  LOGIN / LOGOUT
-// ════════════════════════════════════════
-async function doLogin() {
-  const pw = document.getElementById('login-pw').value;
+async function openUserChat(id) {
+  const { data } = await sb.from('chats').select('*').eq('id',id).single();
+  if(!data) return;
+  currentChatId = id;
+  loadUserChatView(data);
+  showView('view-user-chat');
+  // Mark host msgs as seen
+  const updated = data.msgs.map(m => m.from==='host' ? {...m, seenByUser:true} : m);
+  await sb.from('chats').update({msgs:updated}).eq('id',id);
+}
+
+function loadUserChatView(chat) {
+  document.getElementById('uchat-badge').innerHTML =
+    `<span class="mono" style="font-size:.78rem;color:var(--muted2);">${esc(chat.anon_name)}</span>`;
+  document.getElementById('uchat-msgs').innerHTML = chat.msgs.map(m=>`
+    <div class="msg-wrap from-${m.from==='host'?'host':'user'}">
+      <div class="msg-meta">${m.from==='host'?'Antwort · ':'Du · '}${fmtDate(m.ts)}</div>
+      <div class="msg-bubble">${esc(m.text)}</div>
+    </div>
+  `).join('');
+}
+
+async function sendUserMsg() {
+  const text = document.getElementById('uchat-input').value.trim();
+  if(!text) { toast('Bitte schreib etwas','err'); return; }
+  btnLoad('btn-uchat-send','Senden...');
+  const { data:chat } = await sb.from('chats').select('msgs').eq('id',currentChatId).single();
+  const newMsgs = [...chat.msgs, {from:'user',text,ts:Date.now()}];
+  const { error } = await sb.from('chats').update({msgs:newMsgs,read:false}).eq('id',currentChatId);
+  btnReset('btn-uchat-send','Senden');
+  if(error) { toast('Fehler','err'); return; }
+  document.getElementById('uchat-input').value='';
+  const { data:updated } = await sb.from('chats').select('*').eq('id',currentChatId).single();
+  loadUserChatView(updated);
+  toast('Gesendet','ok');
+}
+
+function openNewChat() {
+  document.getElementById('new-chat-text').value='';
+  document.getElementById('modal-new-chat').classList.add('open');
+}
+
+async function createNewChat() {
+  const text = document.getElementById('new-chat-text').value.trim();
+  if(!text) { toast('Bitte schreib etwas','err'); return; }
+
+  const cfg = await getSetting('open');
+  if(cfg==='false') { toast('Neue Chats sind gerade deaktiviert','err'); return; }
+
+  btnLoad('btn-new-chat','Erstellen...');
+  const id = Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  const anonName = genAnonName();
+  const msgs = [{from:'user',text,ts:Date.now()}];
+
+  const { error } = await sb.from('chats').insert({
+    id, token:genToken(), msgs, read:false,
+    type:'user', anon_name:anonName, user_id:currentUser.id
+  });
+  btnReset('btn-new-chat','Chat starten');
+  if(error) { toast('Fehler: '+error.message,'err'); return; }
+  closeModal('modal-new-chat');
+  await loadUserChats();
+  toast('Neuer Chat gestartet!','ok');
+}
+
+// ═══════════════════════════════════════════════
+//  ADMIN LOGIN
+// ═══════════════════════════════════════════════
+async function doAdminLogin() {
+  const pw = document.getElementById('admin-pw').value;
   const { data, error } = await sb.from('settings').select('value').eq('key','password').single();
-
-  if(error) { toast('Verbindungsfehler', 'err'); return; }
+  if(error) { toast('Verbindungsfehler','err'); return; }
   if(data.value === pw) {
-    sessionStorage.setItem(SESS_KEY, 'yes');
-    document.getElementById('login-pw').value = '';
+    sessionStorage.setItem(ADMIN_SESS,'yes');
+    document.getElementById('admin-pw').value='';
     showView('view-admin');
-    renderAdminDash();
-    toast('Willkommen zurück!', 'ok');
+    loadAdminChats();
+    toast('Willkommen!','ok');
   } else {
-    toast('Falsches Passwort', 'err');
+    toast('Falsches Passwort','err');
   }
 }
 
-function doLogout() {
-  sessionStorage.removeItem(SESS_KEY);
-  showView('view-landing');
+function doAdminLogout() {
+  sessionStorage.removeItem(ADMIN_SESS);
+  showView('view-auth');
   toast('Ausgeloggt');
 }
 
 function requireAdmin() {
-  if(sessionStorage.getItem(SESS_KEY) !== 'yes') { showView('view-login'); return false; }
+  if(sessionStorage.getItem(ADMIN_SESS)!=='yes') { showView('view-admin-login'); return false; }
   return true;
 }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  ADMIN DASHBOARD
-// ════════════════════════════════════════
-async function renderAdminDash() {
+// ═══════════════════════════════════════════════
+async function loadAdminChats() {
   if(!requireAdmin()) return;
-  document.getElementById('thread-list').innerHTML = '<div class="empty-state"><span class="spinner"></span></div>';
-
-  const { data: threads, error } = await sb.from('threads').select('*').order('created_at', { ascending: false });
-  if(error) { toast('Ladefehler: ' + error.message, 'err'); return; }
-
-  allThreads = threads || [];
-  renderStats(allThreads);
-  renderThreadList(allThreads);
+  document.getElementById('admin-chat-list').innerHTML='<div class="empty"><span class="spin"></span></div>';
+  const { data, error } = await sb.from('chats').select('*').order('created_at',{ascending:false});
+  if(error) { toast('Fehler: '+error.message,'err'); return; }
+  allAdminChats = data||[];
+  renderAdminStats(allAdminChats);
+  renderAdminList();
 }
 
-function renderStats(threads) {
-  const total = threads.length;
-  const unread = threads.filter(t => !t.read).length;
-  const answered = threads.filter(t => t.msgs.some(m => m.from === 'host')).length;
-  document.getElementById('admin-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Gesamt</div></div>
-    <div class="stat-card"><div class="stat-num">${unread}</div><div class="stat-lbl">Ungelesen</div></div>
-    <div class="stat-card"><div class="stat-num">${answered}</div><div class="stat-lbl">Beantwortet</div></div>
+function renderAdminStats(chats) {
+  const total=chats.length;
+  const unread=chats.filter(c=>!c.read).length;
+  const answered=chats.filter(c=>c.msgs.some(m=>m.from==='host')).length;
+  document.getElementById('admin-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Gesamt</div></div>
+    <div class="stat"><div class="stat-n">${unread}</div><div class="stat-l">Ungelesen</div></div>
+    <div class="stat"><div class="stat-n">${answered}</div><div class="stat-l">Beantwortet</div></div>
   `;
 }
 
-function renderThreadList(threads) {
-  const filter = document.getElementById('filter-sel').value;
-  let list = [...threads];
-  if(filter === 'unread') list = list.filter(t => !t.read);
-  if(filter === 'unanswered') list = list.filter(t => !t.msgs.some(m => m.from === 'host'));
+function renderAdminList() {
+  const filter = document.getElementById('admin-filter').value;
+  let list = [...allAdminChats];
+  if(filter==='unread') list=list.filter(c=>!c.read);
+  if(filter==='unanswered') list=list.filter(c=>!c.msgs.some(m=>m.from==='host'));
+  if(filter==='guest') list=list.filter(c=>c.type==='guest');
+  if(filter==='user') list=list.filter(c=>c.type==='user');
 
-  const el = document.getElementById('thread-list');
-  if(!list.length) {
-    el.innerHTML = `<div class="empty-state"><div class="es-icon">📭</div><p>Keine Nachrichten</p></div>`;
-    return;
-  }
+  const el=document.getElementById('admin-chat-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="ei">📭</div><p>Keine Nachrichten</p></div>'; return; }
 
-  el.innerHTML = list.map(t => {
-    const last = t.msgs[t.msgs.length - 1];
-    const hasReply = t.msgs.some(m => m.from === 'host');
+  el.innerHTML=list.map(c=>{
+    const last=c.msgs[c.msgs.length-1];
+    const hasReply=c.msgs.some(m=>m.from==='host');
+    const typeLabel=c.type==='guest'?'Gast':'Account';
     return `
-      <div class="thread-list-item" onclick="openThread('${t.id}')">
-        <div class="tli-avatar">${t.token.slice(5,7).toUpperCase()}</div>
-        <div class="tli-info">
-          <div class="tli-top">
-            <span class="tli-token">${t.token}</span>
-            <span class="tli-time">${fmtDate(last.ts)}</span>
+      <div class="chat-item" onclick="openAdminChat('${c.id}')">
+        <div class="chat-avatar">${c.anon_name.slice(0,2).toUpperCase()}</div>
+        <div class="chat-info">
+          <div class="chat-top">
+            <span class="chat-name">${esc(c.anon_name)}</span>
+            <span class="chat-time">${fmtDate(last.ts)}</span>
           </div>
-          <div class="tli-preview">${hasReply?'✓ Beantwortet · ':''}${escHtml(last.text).slice(0,80)}${last.text.length>80?'…':''}</div>
+          <div class="chat-preview">${typeLabel} · ${hasReply?'✓ Beantwortet · ':''}${esc(last.text).slice(0,60)}${last.text.length>60?'…':''}</div>
         </div>
-        ${!t.read ? '<div class="unread-dot"></div>' : ''}
-      </div>
-    `;
+        ${!c.read?'<div class="unread-dot"></div>':''}
+      </div>`;
   }).join('');
 }
 
-async function openThread(id) {
+async function openAdminChat(id) {
   if(!requireAdmin()) return;
-  const thread = allThreads.find(t => t.id === id);
-  if(!thread) return;
+  const chat = allAdminChats.find(c=>c.id===id);
+  if(!chat) return;
+  currentChatId=id;
 
   // Mark as read
-  if(!thread.read) {
-    await sb.from('threads').update({ read: true }).eq('id', id);
-    thread.read = true;
+  if(!chat.read) {
+    await sb.from('chats').update({read:true}).eq('id',id);
+    chat.read=true;
   }
 
-  currentThreadId = id;
-
-  document.getElementById('thread-header').innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.5rem;">
-      <div class="tli-avatar" style="width:40px;height:40px;">${thread.token.slice(5,7).toUpperCase()}</div>
+  document.getElementById('achat-header').innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="chat-avatar" style="width:40px;height:40px;">${chat.anon_name.slice(0,2).toUpperCase()}</div>
       <div>
-        <div class="tli-token" style="font-size:0.9rem;">${thread.token}</div>
-        <div class="text-muted">${thread.msgs.length} Nachricht${thread.msgs.length!==1?'en':''}</div>
+        <div class="chat-name" style="font-size:.88rem;">${esc(chat.anon_name)}</div>
+        <div class="muted">${chat.type==='guest'?'Gast (einmalig)':'Nutzer mit Account'} · ${chat.msgs.length} Nachricht${chat.msgs.length!==1?'en':''}</div>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  document.getElementById('thread-messages').innerHTML = thread.msgs.map(m => `
-    <div class="msg-wrap from-${m.from === 'host' ? 'host' : 'sender'}">
-      <div class="msg-meta">${m.from === 'host' ? 'Du · ' : 'Anonym · '}${fmtDate(m.ts)}</div>
-      <div class="msg-bubble">${escHtml(m.text)}</div>
+  document.getElementById('achat-msgs').innerHTML=chat.msgs.map(m=>`
+    <div class="msg-wrap from-${m.from==='host'?'host':'user'}">
+      <div class="msg-meta">${m.from==='host'?'Du · ':'Anonym · '}${fmtDate(m.ts)}</div>
+      <div class="msg-bubble">${esc(m.text)}</div>
     </div>
   `).join('');
 
-  document.getElementById('reply-text').value = '';
-  showView('view-thread');
+  document.getElementById('achat-input').value='';
+  showView('view-admin-chat');
 }
 
-async function sendReply() {
+async function sendAdminReply() {
   if(!requireAdmin()) return;
-  const text = document.getElementById('reply-text').value.trim();
-  if(!text) { toast('Leere Antwort', 'err'); return; }
+  const text=document.getElementById('achat-input').value.trim();
+  if(!text){ toast('Bitte schreib etwas','err'); return; }
+  btnLoad('btn-achat-send','Senden...');
 
-  const btn = document.getElementById('btn-reply');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Senden...';
-
-  const thread = allThreads.find(t => t.id === currentThreadId);
-  const newMsgs = [...thread.msgs, { from: 'host', text, ts: Date.now() }];
-
-  const { error } = await sb.from('threads').update({ msgs: newMsgs }).eq('id', currentThreadId);
-
-  btn.disabled = false;
-  btn.innerHTML = 'Antwort senden';
-
-  if(error) { toast('Fehler: ' + error.message, 'err'); return; }
-
-  thread.msgs = newMsgs;
-  openThread(currentThreadId);
-  toast('Antwort gesendet!', 'ok');
+  const chat=allAdminChats.find(c=>c.id===currentChatId);
+  const newMsgs=[...chat.msgs,{from:'host',text,ts:Date.now(),seenByUser:false}];
+  const {error}=await sb.from('chats').update({msgs:newMsgs}).eq('id',currentChatId);
+  btnReset('btn-achat-send','Antwort senden');
+  if(error){ toast('Fehler','err'); return; }
+  chat.msgs=newMsgs;
+  openAdminChat(currentChatId);
+  toast('Antwort gesendet!','ok');
 }
 
-async function deleteThread() {
-  if(!confirm('Thread wirklich löschen?')) return;
-  const { error } = await sb.from('threads').delete().eq('id', currentThreadId);
-  if(error) { toast('Fehler: ' + error.message, 'err'); return; }
-  allThreads = allThreads.filter(t => t.id !== currentThreadId);
+async function deleteAdminChat() {
+  if(!confirm('Chat wirklich löschen?')) return;
+  await sb.from('chats').delete().eq('id',currentChatId);
+  allAdminChats=allAdminChats.filter(c=>c.id!==currentChatId);
   showView('view-admin');
-  renderStats(allThreads);
-  renderThreadList(allThreads);
+  renderAdminStats(allAdminChats);
+  renderAdminList();
   toast('Gelöscht');
 }
 
-// ════════════════════════════════════════
+// ═══════════════════════════════════════════════
 //  SETTINGS
-// ════════════════════════════════════════
-async function openSettings() {
-  const { data } = await sb.from('settings').select('*');
-  const cfg = {};
-  (data||[]).forEach(r => cfg[r.key] = r.value);
-  document.getElementById('toggle-open').checked = cfg.open !== 'false';
+// ═══════════════════════════════════════════════
+async function getSetting(key) {
+  const {data}=await sb.from('settings').select('value').eq('key',key).single();
+  return data?.value;
+}
+async function saveSetting(key,val) {
+  await sb.from('settings').upsert({key,value:String(val)},{onConflict:'key'});
+  toast('Gespeichert','ok');
+}
+async function openAdminSettings() {
+  const val=await getSetting('open');
+  document.getElementById('toggle-open').checked=val!=='false';
   document.getElementById('modal-settings').classList.add('open');
 }
-
-async function saveSetting(key, val) {
-  await sb.from('settings').upsert({ key, value: String(val) }, { onConflict: 'key' });
-  toast('Gespeichert', 'ok');
-}
-
-function changePW() {
-  closeModal('modal-settings');
-  document.getElementById('modal-pw').classList.add('open');
-}
-
+function openChangePW() { closeModal('modal-settings'); document.getElementById('modal-pw').classList.add('open'); }
 async function confirmChangePW() {
-  const { data } = await sb.from('settings').select('value').eq('key','password').single();
-  const old = document.getElementById('pw-old').value;
-  const nw  = document.getElementById('pw-new').value;
-  const rep = document.getElementById('pw-rep').value;
-
-  if(old !== data.value) { toast('Aktuelles Passwort falsch', 'err'); return; }
-  if(nw.length < 6) { toast('Mindestens 6 Zeichen', 'err'); return; }
-  if(nw !== rep) { toast('Passwörter stimmen nicht überein', 'err'); return; }
-
-  await sb.from('settings').upsert({ key: 'password', value: nw }, { onConflict: 'key' });
+  const {data}=await sb.from('settings').select('value').eq('key','password').single();
+  const old=document.getElementById('pw-old').value;
+  const nw=document.getElementById('pw-new').value;
+  const rep=document.getElementById('pw-rep').value;
+  if(old!==data.value){ toast('Aktuelles Passwort falsch','err'); return; }
+  if(nw.length<6){ toast('Mindestens 6 Zeichen','err'); return; }
+  if(nw!==rep){ toast('Passwörter stimmen nicht überein','err'); return; }
+  await sb.from('settings').upsert({key:'password',value:nw},{onConflict:'key'});
   closeModal('modal-pw');
-  toast('Passwort geändert!', 'ok');
+  toast('Passwort geändert!','ok');
 }
-
 async function nukeAll() {
-  if(!confirm('Wirklich ALLE Nachrichten für immer löschen?')) return;
-  await sb.from('threads').delete().neq('id', 'x');
-  allThreads = [];
+  if(!confirm('Wirklich ALLE Chats löschen?')) return;
+  await sb.from('chats').delete().neq('id','x');
+  allAdminChats=[];
   closeModal('modal-settings');
-  renderStats([]);
-  renderThreadList([]);
-  toast('Alle Nachrichten gelöscht', 'ok');
+  renderAdminStats([]);
+  renderAdminList();
+  toast('Alles gelöscht','ok');
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-document.querySelectorAll('.modal-bg').forEach(bg => {
-  bg.addEventListener('click', e => { if(e.target===bg) bg.classList.remove('open'); });
-});
-
-// ════════════════════════════════════════
-//  HELPERS
-// ════════════════════════════════════════
-function escHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-}
-
-function fmtDate(ts) {
-  const d = new Date(ts);
-  const diff = (Date.now() - d) / 1000;
-  if(diff < 60) return 'Gerade eben';
-  if(diff < 3600) return Math.floor(diff/60) + ' Min.';
-  if(diff < 86400) return Math.floor(diff/3600) + ' Std.';
-  return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
-}
+// ═══════════════════════════════════════════════
+//  INIT — check if already logged in
+// ═══════════════════════════════════════════════
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session?.user){
+    currentUser=session.user;
+    showView('view-user');
+    loadUserChats();
+  }
+})();
 </script>
 </body>
 </html>
